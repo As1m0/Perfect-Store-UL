@@ -1,0 +1,14 @@
+[
+    {
+        "page" : "index",
+        "template" : "main.html",
+        "fullTemplate" : false,
+        "class" : "IndexPage"
+    },
+    {
+        "page" : "aloldal",
+        "template" : "aloldal.html",
+        "fullTemplate" : false,
+        "class" : "AloldalPage"
+    }
+]
