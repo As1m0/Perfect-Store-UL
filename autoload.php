@@ -20,8 +20,12 @@ spl_autoload_register(function(string $type)
     {
         require_once("core/pages/$type.php");
     }
-    elseif(file_exists("core/PHPMailer-master/src/$type.php"))
+    elseif(file_exists("api/classes/$type.php"))
     {
-        require_once("core/PHPMailer-master/src/$type.php");
+        require_once("api/classes/$type.php");
+    }
+    elseif(file_exists("api/config/$type.php"))
+    {
+        require_once("api/config/$type.php");
     }
 });

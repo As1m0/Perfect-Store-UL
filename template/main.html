@@ -1,2 +1,107 @@
-<h1>%!TITLE!%</h1>
-<p>%!WELCOME!%</p>
+<div class="header my-5">
+    <h1>OOS Dashboard</h1>
+    <p>Out of Stock Analysis & Monitoring</p>
+</div>
+
+<div class="filters">
+    <div class="filter-grid">
+        <div class="filter-group">
+            <label for="shopSelect">Shop</label>
+            <select id="shopSelect">
+                <option value="1">Rossmann</option>
+                <option value="2">DM</option>
+                <option value="3" selected>Kifli</option>
+                <option value="4">Pepita</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Categories</label>
+            <div class="multi-select" id="categorySelect">
+                <input type="text" placeholder="Select categories..." readonly>
+                <div class="multi-select-dropdown" id="categoryDropdown"></div>
+                <div class="selected-tags" id="categoryTags"></div>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label>Brands</label>
+            <div class="multi-select" id="brandSelect">
+                <input type="text" placeholder="Select brands..." readonly>
+                <div class="multi-select-dropdown" id="brandDropdown"></div>
+                <div class="selected-tags" id="brandTags"></div>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label>Status</label>
+            <div class="multi-select" id="statusSelect">
+                <input type="text" placeholder="Select status..." readonly>
+                <div class="multi-select-dropdown" id="statusDropdown">
+                    <div class="multi-select-option" data-value="1">In Stock</div>
+                    <div class="multi-select-option" data-value="0">Out of Stock</div>
+                    <div class="multi-select-option" data-value="-1">Unavailable</div>
+                </div>
+                <div class="selected-tags" id="statusTags"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="sort-controls">
+            <label>Sort by:</label>
+            <select id="sortColumn">
+                <option value="category">Category</option>
+                <option value="subcategory">Subcategory</option>
+                <option value="brand">Brand</option>
+                <option value="name">Product Name</option>
+                <option value="last_status">Last Status</option>
+                <option value="oos_percentage">Availability %</option>
+                <option value="days_oos">Days OOS</option>
+            </select>
+            <select id="sortDirection">
+                <option value="ASC">Ascending</option>
+                <option value="DESC">Descending</option>
+            </select>
+        </div>
+        <div>
+            <button class="btn btn-primary" onclick="loadData()">🔍 Search</button>
+            <button class="btn btn-secondary" onclick="clearFilters()">🗑️ Clear</button>
+        </div>
+    </div>
+</div>
+
+<div id="loadingIndicator" class="loading" style="display: none;">
+    <div class="spinner"></div>
+    <p>Loading data...</p>
+</div>
+
+<div id="errorMessage" class="error-message" style="display: none;"></div>
+
+<div class="table-container">
+    <table class="data-table" id="dataTable" style="display: none;">
+        <thead>
+            <tr>
+                <th class="sortable" data-column="category">Category</th>
+                <th class="sortable" data-column="subcategory">Subcategory</th>
+                <th class="sortable" data-column="brand">Brand</th>
+                <th class="sortable" data-column="ean">EAN</th>
+                <th class="sortable" data-column="name">Product Name</th>
+                <th class="sortable" data-column="last_status">Status</th>
+                <th class="sortable" data-column="oos_percentage">Availability</th>
+                <th class="sortable" data-column="days_oos">Days OOS</th>
+                <th class="" data-column="">
+                    <options>
+                </th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+    <div id="noDataMessage" class="no-data" style="display: none;">
+        <p>📊 No data found. Try adjusting your filters.</p>
+    </div>
+</div>
+
+
+<script src="template/js/oos-table-handler.js">
+</script>

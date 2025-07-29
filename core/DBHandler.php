@@ -76,4 +76,17 @@ abstract class DBHandler
             throw new DBException("Az SQL parancs futtatása sikertelen!");
         }
     }
+
+    public static function RunCommandWithResult(string $sql) : array
+    {
+        try
+        {
+            return self::$con->query($sql)->fetch_all(MYSQLI_ASSOC);
+        }
+        catch (Exception $ex)
+        {
+            //print_r($ex);
+            throw new DBException("Az SQL parancs futtatása sikertelen!");
+        }
+    }
 }
