@@ -243,7 +243,7 @@ async function loadData() {
         }
 
         currentData = responseData.data;
-        document.getElementById('resultCount').textContent = `Total records: ${currentData.length}`;
+
         //console.log(currentData.length + ' records loaded');
         displayData(responseData.data);
         updateSortHeaders();
@@ -276,7 +276,7 @@ function displayData(data) {
         return;
     }
 
-
+    document.getElementById('resultCount').textContent = `Total records: ${data.length}`;
 
     dataTable.style.display = 'table';
     noDataMessage.style.display = 'none';
@@ -293,7 +293,7 @@ function displayData(data) {
             <td>${getProductNameLink(row.name, row.product_url)}</td>
             <td>${getStatusBadge(row.last_status)}</td>
             <td>${getPercentageBar(row.oos_percentage)}</td>
-            <td><strong>${row.days_oos}</strong></td>
+            <td><strong>${row.days_oos*7}</strong></td>
             <td>
             <button class="edit-url-btn" onclick="editUrl('${row.ean}', '${document.getElementById('shopSelect').value}', '${row.product_url}')">EDIT</button>
             <button class="untrack-btn" onclick="untrackProduct('${row.ean}', '${document.getElementById('shopSelect').value}')">UNTRACK</button>
@@ -301,6 +301,16 @@ function displayData(data) {
         `;
         tableBody.appendChild(tr);
     });
+
+    let totalOOSScore= 0;
+    let sumOOSScore= 0;
+    data.forEach(row => {
+        const percentage = parseFloat(row.oos_percentage) || 0;
+        sumOOSScore += percentage;
+    });
+    totalOOSScore = (sumOOSScore / data.length).toFixed(1);
+    document.getElementById('oos-rate-score').textContent = `${totalOOSScore}%`;
+
 }
 
 // Edit product URL POP-up
@@ -319,23 +329,32 @@ function editUrl(ean, shopId, currentUrl) {
         },
         body: JSON.stringify({ EAN: parseInt(ean), shopId: parseInt(shopId), product_url: newUrl })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showFeedback('Product URL updated successfully.');
-            loadData(); // Reload data to reflect changes
-        } else {
-            throw new Error(data.message || 'Failed to update product URL');
-        }
-    })
-    .catch(error => {
-        console.error('Error updating product URL:', error);
-        showError('Failed to update product URL. Please try again.');
-    })
-    .finally(() => {
-        hideLoading();
-    });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showFeedback('Product URL updated successfully.');
+                loadData(); // Reload data to reflect changes
+            } else {
+                throw new Error(data.message || 'Failed to update product URL');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating product URL:', error);
+            showError('Failed to update product URL. Please try again.');
+        })
+        .finally(() => {
+            hideLoading();
+        });
 }
+
+// Search by product name
+document.getElementById('searchName').addEventListener('input', function () {
+    const searchTerm = this.value.toLowerCase().trim();
+    const filteredData = currentData.filter(row => {
+        return row.name.toLowerCase().includes(searchTerm);
+    });
+    displayData(filteredData);
+});
 
 // Get status badge HTML
 function getStatusBadge(status) {
@@ -432,4 +451,16 @@ function showFeedback(message) {
 // Hide error message
 function hideError() {
     document.getElementById('errorMessage').style.display = 'none';
+}
+
+function exportTableToExcel(tableID, filename = '') {
+    const table = document.getElementById(tableID);
+    const html = table.outerHTML.replace(/ /g, '%20');
+
+    const dataUri = 'data:application/vnd.ms-excel,' + html;
+
+    const link = document.createElement('a');
+    link.href = dataUri;
+    link.download = filename ? `${filename}.xls` : 'table.xls';
+    link.click();
 }
