@@ -10,5 +10,11 @@
         "template" : "aloldal.html",
         "fullTemplate" : false,
         "class" : "AloldalPage"
+    },
+    {
+        "page" : "login",
+        "template" : "login.html",
+        "fullTemplate" : false,
+        "class" : "LoginPage"
     }
 ]

@@ -13,5 +13,10 @@ class NavModule implements IVisibleModuleBase
     public function Run(array $data = []): void
     {
         $this->template = Template::Load("navigation.html");
+
+        if(isset($_SESSION["usermail"]))
+        {
+            $this->template->AddData("USERMAIL", $_SESSION["usermail"]);
+        }
     }
 }

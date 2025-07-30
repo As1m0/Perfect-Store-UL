@@ -1,0 +1,29 @@
+<h6 class="text-center" style="background-color: %!COLOR!%; padding: 5px; color: white;">%!RESULT!%</h6>
+<div class="container d-flex justify-content-center align-items-center vh-100" id="login-box">
+    <div class="card p-4 shadow-lg my-5 w-100 rounded-2" id="login-box" style="max-width: 500px;">
+        <h2 class="text-center mb-4 mt-2">Login</h2>
+        <form method="post">
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" name="email" class="form-control" id="email" placeholder="Enter Email" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" name="pass" class="form-control" id="password" placeholder="Enter password" required>
+            </div>
+            <!--
+            <div class="custom-control custom-checkbox text-center">
+                <input type="checkbox" class="custom-control-input" id="customCheck1" checked name="keep">
+                <label class="custom-control-label small" for="customCheck1">maradjak bejelentkezve.</label>
+            </div>
+            -->
+            <button type="submit" class="btn btn-primary w-100 mt-3" name="login">Sign in</button>
+        </form>
+        <div class="text-center mt-3">
+            <small>
+                Don't you have account? <p><a href="mailto:abel.ujvarossy@unilever.com">Request access</a></p>
+            </small>
+        </div>
+    </div>
+</div>
+%!SCRIPT!%

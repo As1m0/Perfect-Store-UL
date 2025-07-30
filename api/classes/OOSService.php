@@ -183,4 +183,60 @@ ORDER BY b.name, c.name, sc.name, p.name;";
             throw new Exception("Failed to fetch product");
         }
     }
+
+
+
+    public function untrackProduct($ean, $shopId): bool {  
+        try {
+            $query = "DELETE FROM urls WHERE ean = :ean AND shop_id = :shopId";
+            $stmt = $this->db->prepare($query);
+            $stmt->execute([$ean, $shopId]);
+            return $stmt->execute();
+        } catch (Exception $e) {
+            error_log("Error in deleteProduct: " . $e->getMessage());
+            throw new Exception("Failed to delete product");
+        }
+    }
+
+    public function addProduct($ean, $name, $brandId, $categoryId, $subcategoryId, $url, $shopId): bool {
+        try {
+            $checkQuery = "SELECT COUNT(*) FROM products WHERE ean = :ean";
+            $checkStmt = $this->db->prepare($checkQuery);
+            $checkStmt->execute([':ean' => $ean]);
+            if ($checkStmt->fetchColumn() > 0) {
+               //uplad only shop URL if product already exists
+                $urlQuery = "INSERT INTO urls (ean, shop_id, url) VALUES (:ean, :shopId, :url)";
+                $urlStmt = $this->db->prepare($urlQuery);
+                return $urlStmt->execute([':ean' => $ean, ':shopId' => $shopId, ':url' => $url]);
+            }
+            else {
+                $query = "INSERT INTO products (ean, name, brand_id, category_id, subcategory_id) VALUES (:ean, :name, :brandId, :categoryId, :subcategoryId)";
+                $stmt = $this->db->prepare($query);
+                $stmt->execute([
+                    ':ean' => $ean,
+                    ':name' => $name,
+                    ':brandId' => $brandId,
+                    ':categoryId' => $categoryId,
+                    ':subcategoryId' => $subcategoryId
+                ]);
+                $urlQuery = "INSERT INTO urls (ean, shop_id, url) VALUES (:ean, :shopId, :url)";
+                $urlStmt = $this->db->prepare($urlQuery);
+                return $urlStmt->execute([':ean' => $ean, ':shopId' => $shopId, ':url' => $url]);
+            }
+        } catch (Exception $e) {
+            error_log("Error in addProduct: " . $e->getMessage());
+            throw new Exception("Failed to add product");
+        }
+    }
+
+    public function editProductUrl($ean, $shopId, $productUrl): bool {
+        try {
+            $query = "UPDATE urls SET url = :url WHERE ean = :ean AND shop_id = :shopId";
+            $stmt = $this->db->prepare($query);
+            return $stmt->execute([':url' => $productUrl, ':ean' => $ean, ':shopId' => $shopId]);
+        } catch (Exception $e) {
+            error_log("Error in editProductUrl: " . $e->getMessage());
+            throw new Exception("Failed to update product URL");
+        }
+    }
 }

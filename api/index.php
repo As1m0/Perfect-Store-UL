@@ -78,10 +78,50 @@ try {
                     $data = $oosService->getOOSData($options);
                     echo ApiResponse::success($data, 'OOS data retrieved successfully');
                     break;
-                    
+
+                case 'untrack-product':
+                    $input = json_decode(file_get_contents('php://input'), true);
+
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        echo ApiResponse::error('Invalid JSON in request body', 400);
+                        break;
+                    }
+                    $ean = $input['EAN'] ?? '';
+                    $shopId = $input['shopId'] ?? '';
+                    if ($ean && $shopId) {
+                        $result = $oosService->untrackProduct($ean, $shopId);
+                        if ($result) {
+                            echo ApiResponse::success(null, 'Product deleted successfully');
+                        } else {
+                            echo ApiResponse::error('Failed to delete product', 500);
+                        }
+                    } else {
+                        echo ApiResponse::error('EAN and ShopId parameter required', 400);
+                    }
+                    break;
+                
+                    case 'edit-product-url':
+                    $input = json_decode(file_get_contents('php://input'), true);  
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        echo ApiResponse::error('Invalid JSON in request body', 400);
+                        break;
+                    }
+                    $ean = $input['EAN'] ?? '';
+                    $shopId = $input['shopId'] ?? '';
+                    $productUrl = $input['product_url'] ?? '';
+                    if ($ean && $shopId && $productUrl) {
+                        $result = $oosService->editProductUrl($ean, $shopId, $productUrl);
+                        if ($result) {
+                            echo ApiResponse::success(null, 'Product URL updated successfully');
+                        } else {
+                            echo ApiResponse::error('Failed to update product URL', 500);
+                        }
+                    } else {
+                        echo ApiResponse::error('EAN, ShopId, and ProductUrl parameters required', 400);
+                    }
+                    break;
                 default:
                     echo ApiResponse::error('Endpoint not found', 404);
-                    break;
             }
             break;
             

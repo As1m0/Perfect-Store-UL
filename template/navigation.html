@@ -1,5 +1,5 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <a class="navbar-brand" href="#">Vizsga</a>
+    <a class="navbar-brand px-2" href="#">Perfec Store Online</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
         aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -8,10 +8,22 @@
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
             <li class="nav-item active">
-                <a class="nav-link" href="index.php">Home</a>
+                <a class="nav-link" href="index.php">OOS</a>
             </li>
             <li class="nav-item active">
                 <a class="nav-link" href="index.php?p=aloldal">Aloldal</a>
+            </li>
+        </ul>
+        <ul class="navbar-nav ms-auto" id="nav-rigth">
+            <li class="nav-item dropdown profile">
+                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    User
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li class="dropdown-item">%!USERMAIL!%</li>
+                    <li><a class="dropdown-item text-danger" href="index.php?logout=true">Sign out</a></li>
+                </ul>
             </li>
         </ul>
     </div>

@@ -87,6 +87,34 @@ abstract class Model
         }
     }
 
+    public static function Login(string $email, string $pass)
+    {
+        try {
+            $result = DBHandler::RunQuery("SELECT * FROM `users` WHERE email = ? AND `password` = ?",
+            [ new DBParam(DBTypes::String, $email), new DBParam(DBTypes::String, $pass)] );
+        } catch (Exception $e) {
+            throw new DBException("Az adat feltöltése során hiba történt!", 0, $e);
+        }
+        if($result->num_rows === 1)
+        {
+            $data = $result->fetch_assoc();
+            if(!empty($data))
+            {
+                //save user info to SESSION
+                $_SESSION["loggedIn"] = true;
+                $_SESSION["usermail"] = $data["email"];
+                $_SESSION["userID"] = $data["id"];
+                $_SESSION["username"] =  $data["name"];
+                $_SESSION["groupMember"] = $data["group_member"];
+                return true;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     public static function GetProducts($query) : array
     {
         $result = DBHandler::RunQuery($query);

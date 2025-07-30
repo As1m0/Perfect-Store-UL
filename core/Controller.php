@@ -5,6 +5,13 @@ abstract class Controller
     public static function Route() : void
     {
         global $cfg;
+        // Logout
+        if (isset($_GET['logout']) && $_GET['logout']) {
+            session_unset();
+            session_destroy();
+            header("Location: index.php?p=login");
+            exit();
+        }
 
         $requestUri = $_SERVER['REQUEST_URI'];
         if (strpos($requestUri, '/api/') !== false || (isset($_GET['api']) && $_GET['api'] === '1')) {
@@ -20,6 +27,12 @@ abstract class Controller
         }
         try
         {
+           // Check if the page is 'login' and if the user is not logged in
+            if(!isset($_SESSION["loggedIn"]) && $page !== "login")
+            {
+            header("Location: index.php?p=login");
+            exit();
+            }
             DBHandler::Init();
             View::setBaseTemplate(Template::Load($cfg["mainPageTemplate"]));
             $pageData = Model::GetPageData($page);
@@ -36,7 +49,11 @@ abstract class Controller
                     }
                     else
                     {
-                        View::getBaseTemplate()->AddData($cfg["defaultNavFlag"], Controller::RunModule("NavModule"));
+                        if(isset($_SESSION["loggedIn"]))
+                        {
+                            //Add the navigation module only if the user is logged in
+                            View::getBaseTemplate()->AddData($cfg["defaultNavFlag"], Controller::RunModule("NavModule"));
+                        }
                         View::getBaseTemplate()->AddData($cfg["defaultContentFlag"], $result);
                        //View::getBaseTemplate()->AddData($cfg["defaultFooterFlag"], Template::Load("footer.html"));
                     }

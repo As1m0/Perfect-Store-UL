@@ -101,6 +101,40 @@ async function loadInitialData() {
     }
 }
 
+async function untrackProduct(ean, shopId) {
+    if (!confirm(`Are you sure you want to untrack product with EAN ${ean} in shop ${shopId}?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/untrack-product`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ EAN: parseInt(ean), shopId: parseInt(shopId) })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const responseData = await response.json();
+        if (!responseData.success) {
+            throw new Error(responseData.message || 'API returned error');
+        }
+
+        // Reload data after deletion
+        loadData();
+        showFeedback(`Product with EAN ${ean} has been successfully untracked.`);
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        showError('Failed to untrack product. Please try again.');
+    } finally {
+        hideLoading();
+    }
+}
+
 // Populate multi-select dropdown
 function populateMultiSelect(type, data, textField) {
     const dropdown = document.getElementById(`${type}Dropdown`);
@@ -209,6 +243,8 @@ async function loadData() {
         }
 
         currentData = responseData.data;
+        document.getElementById('resultCount').textContent = `Total records: ${currentData.length}`;
+        //console.log(currentData.length + ' records loaded');
         displayData(responseData.data);
         updateSortHeaders();
 
@@ -258,9 +294,46 @@ function displayData(data) {
             <td>${getStatusBadge(row.last_status)}</td>
             <td>${getPercentageBar(row.oos_percentage)}</td>
             <td><strong>${row.days_oos}</strong></td>
-            <td><a href="?p=edit-product&ean=${row.ean}" target="blank">edit</a></td>
+            <td>
+            <button class="edit-url-btn" onclick="editUrl('${row.ean}', '${document.getElementById('shopSelect').value}', '${row.product_url}')">EDIT</button>
+            <button class="untrack-btn" onclick="untrackProduct('${row.ean}', '${document.getElementById('shopSelect').value}')">UNTRACK</button>
+            </td>
         `;
         tableBody.appendChild(tr);
+    });
+}
+
+// Edit product URL POP-up
+function editUrl(ean, shopId, currentUrl) {
+    const newUrl = prompt('Enter new product URL:', currentUrl);
+    if (newUrl === null || newUrl.trim() === '') {
+        return; // User cancelled or entered empty URL
+    }
+
+    showLoading();
+
+    fetch(`${API_BASE_URL}/edit-product-url`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ EAN: parseInt(ean), shopId: parseInt(shopId), product_url: newUrl })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showFeedback('Product URL updated successfully.');
+            loadData(); // Reload data to reflect changes
+        } else {
+            throw new Error(data.message || 'Failed to update product URL');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating product URL:', error);
+        showError('Failed to update product URL. Please try again.');
+    })
+    .finally(() => {
+        hideLoading();
     });
 }
 
@@ -345,6 +418,15 @@ function showError(message) {
     const errorDiv = document.getElementById('errorMessage');
     errorDiv.textContent = message;
     errorDiv.style.display = 'block';
+}
+
+function showFeedback(message) {
+    const feedbackDiv = document.getElementById('feedbackMessage');
+    feedbackDiv.textContent = message;
+    feedbackDiv.style.display = 'block';
+    setTimeout(() => {
+        feedbackDiv.style.display = 'none';
+    }, 3000);
 }
 
 // Hide error message
