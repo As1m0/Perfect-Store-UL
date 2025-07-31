@@ -5,6 +5,7 @@ const API_BASE_URL = './api/index.php'; // Updated for no mod_rewrite
 // State management
 let currentData = [];
 let categories = [];
+let subCategories = [];
 let brands = [];
 let selectedCategories = [];
 let selectedBrands = [];
@@ -76,8 +77,9 @@ function setupEventListeners() {
 async function loadInitialData() {
     try {
         // Load categories and brands for filters
-        const [categoriesResponse, brandsResponse] = await Promise.all([
+        const [categoriesResponse, subCategoriesResponse, brandsResponse] = await Promise.all([
             fetch(`${API_BASE_URL}/categories`),
+            fetch(`${API_BASE_URL}/sub-categories`),
             fetch(`${API_BASE_URL}/brands`)
         ]);
 
@@ -85,12 +87,21 @@ async function loadInitialData() {
             const categoriesData = await categoriesResponse.json();
             categories = categoriesData.success ? categoriesData.data : [];
             populateMultiSelect('category', categories, 'name');
+            populateNewProductSelect('category', categories, 'name');
         }
 
         if (brandsResponse.ok) {
             const brandsData = await brandsResponse.json();
             brands = brandsData.success ? brandsData.data : [];
             populateMultiSelect('brand', brands, 'name');
+            populateNewProductSelect('brand', brands, 'name');
+        }
+
+        if (subCategoriesResponse.ok) {
+            const subCategoriesData = await subCategoriesResponse.json();
+            subCategories = subCategoriesData.success ? subCategoriesData.data : [];
+            populateNewProductSelect('subcategory', subCategories, 'name');
+            console.log('Subcategories loaded:', subCategories);
         }
 
         // Load initial data
@@ -161,6 +172,17 @@ function populateMultiSelect(type, data, textField) {
 
             updateSelectedTags(type, selectedArray);
         });
+
+        dropdown.appendChild(option);
+    });
+}
+
+function populateNewProductSelect(type, data, textField) {
+    const dropdown = document.getElementById(`${type}Dropdown2`);
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id; // Assuming each item has an 'id' field
+        option.textContent = item[textField];
 
         dropdown.appendChild(option);
     });
@@ -282,7 +304,7 @@ function displayData(data) {
     noDataMessage.style.display = 'none';
 
     tableBody.innerHTML = '';
-
+    
     data.forEach(row => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -293,7 +315,7 @@ function displayData(data) {
             <td>${getProductNameLink(row.name, row.product_url)}</td>
             <td>${getStatusBadge(row.last_status)}</td>
             <td>${getPercentageBar(row.oos_percentage)}</td>
-            <td><strong>${row.days_oos*7}</strong></td>
+            <td><strong>${row.days_oos * 7}</strong></td>
             <td>
             <button class="edit-url-btn" onclick="editUrl('${row.ean}', '${document.getElementById('shopSelect').value}', '${row.product_url}')">EDIT</button>
             <button class="untrack-btn" onclick="untrackProduct('${row.ean}', '${document.getElementById('shopSelect').value}')">UNTRACK</button>
@@ -302,8 +324,8 @@ function displayData(data) {
         tableBody.appendChild(tr);
     });
 
-    let totalOOSScore= 0;
-    let sumOOSScore= 0;
+    let totalOOSScore = 0;
+    let sumOOSScore = 0;
     data.forEach(row => {
         const percentage = parseFloat(row.oos_percentage) || 0;
         sumOOSScore += percentage;
@@ -319,8 +341,6 @@ function editUrl(ean, shopId, currentUrl) {
     if (newUrl === null || newUrl.trim() === '') {
         return; // User cancelled or entered empty URL
     }
-
-    showLoading();
 
     fetch(`${API_BASE_URL}/edit-product-url`, {
         method: 'POST',
@@ -342,9 +362,6 @@ function editUrl(ean, shopId, currentUrl) {
             console.error('Error updating product URL:', error);
             showError('Failed to update product URL. Please try again.');
         })
-        .finally(() => {
-            hideLoading();
-        });
 }
 
 // Search by product name
@@ -463,4 +480,171 @@ function exportTableToExcel(tableID, filename = '') {
     link.href = dataUri;
     link.download = filename ? `${filename}.xls` : 'table.xls';
     link.click();
+}
+
+//feedback message
+function showPopUpFeedback(message, success = true) {
+    const feedbackDiv = document.getElementById('newProductFeedback');
+    feedbackDiv.textContent = message;
+    feedbackDiv.style.display = 'block';
+    if (success) {
+        feedbackDiv.style.backgroundColor = '#d4edda'; // Green for success
+    } else {
+        feedbackDiv.style.backgroundColor = '#f8d7da'; // Red for error
+    }
+    setTimeout(() => {
+        feedbackDiv.style.display = 'none';
+    }, 3000);
+}
+
+// Open new product form
+function openNewProductForm() {
+    document.getElementById('newProductFormLayer').style.display = 'block';
+    document.getElementById('newProductFeedback').style.display = 'none';
+    document.getElementById('newProductForm').reset();
+}
+
+// Close new product form
+function closeNewProductForm() {
+    document.getElementById('newProductFormLayer').style.display = 'none';
+    document.getElementById('newProductFeedback').style.display = 'none';
+}
+
+const NewEanInput = document.getElementById('newEan');
+NewEanInput.addEventListener('input', function () {
+    const ean = NewEanInput.value.trim();
+    if (ean.length >= 8) {
+        checkEanExistsInDB(ean);
+    }
+});
+
+
+let ProductExists = false;
+
+// Check if EAN exists in the database
+async function checkEanExistsInDB(ean) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/check-ean`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ EAN: parseInt(ean) })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.success && data.data && data.data.length > 0) {
+            console.log('EAN exists in the database:', data);
+            ProductExists = true;
+            fillBackDataInFrom(data.data);
+        } else {
+            ProductExists = false;
+            resetNewProductForm();
+            console.log('EAN does not exist in the database:', data.message);
+        }
+    } catch (error) {
+        console.error('Error checking EAN:', error);
+        document.getElementById('newProductFeedback').textContent = 'Error checking EAN. Please try again.';
+    }
+}
+
+function resetNewProductForm() {
+    //document.getElementById('newProductForm').reset();
+    document.getElementById('subcategoryDropdown2').value = '';
+    document.getElementById('newName').value = '';
+    document.getElementById('categoryDropdown2').value = '';
+    document.getElementById('brandDropdown2').value = '';
+    document.getElementById('newProductFeedback').textContent = '';
+    document.getElementById('newProductFeedback').style.display = 'none';
+    document.getElementById('newProductFeedback').style.backgroundColor = '';
+}
+
+// Fill form with existing product data
+function fillBackDataInFrom(product) {
+    document.getElementById('newName').value = product[0].name || '';
+    document.getElementById('newName').style.borded = "1px solid green";
+    document.getElementById('subcategoryDropdown2').value = product[0].subcategory_id || '';
+    document.getElementById('categoryDropdown2').value = product[0].category_id || '';
+    document.getElementById('brandDropdown2').value = product[0].brand_id || '';
+}
+
+function submitNewProductForm(event) {
+    event.preventDefault();
+    const ean = document.getElementById('newEan').value.trim();
+    const name = document.getElementById('newName').value.trim();
+    const categoryId = document.getElementById('categoryDropdown2').value;
+    const subcategoryId = document.getElementById('subcategoryDropdown2').value;
+    const brandId = document.getElementById('brandDropdown2').value;
+    const link = document.getElementById('newLink').value.trim();
+
+    if (!ean || !name || !categoryId || !subcategoryId || !brandId) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+
+
+    if (!ProductExists) {
+        fetch(`${API_BASE_URL}/add-product`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                EAN: parseInt(ean),
+                name,
+                category_id: parseInt(categoryId),
+                subcategory_id: parseInt(subcategoryId),
+                brand_id: parseInt(brandId),
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showPopUpFeedback('Product added successfully.');
+                } else {
+                    throw new Error(data.message || 'Failed to add product');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding product:', error);
+                showPopUpFeedback('Failed to add product. Please try again.', false);
+            })
+    }
+
+    ProductExists = false; // Reset ProductExists for next submission
+
+
+    fetch(`${API_BASE_URL}/add-product-link`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            EAN: parseInt(ean),
+            shopId: parseInt(document.getElementById('newshopSelect').value),
+            product_url: link
+        })
+
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showPopUpFeedback('Product link added successfully.');
+                setTimeout(() => {
+                    closeNewProductForm();
+                    resetNewProductForm();
+                    loadData();
+                }, 2000);
+            } else {
+                throw new Error(data.message || 'Failed to add product link');
+            }
+        })
+        .catch(error => {
+            console.error('Error adding product link:', error);
+            showPopUpFeedback('Failed to add product link. Please try again.', false);
+        })
 }

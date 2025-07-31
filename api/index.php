@@ -1,9 +1,5 @@
 <?php
 
-// Enable error reporting for development
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
 require_once 'classes/QueryGenerator.php';
 require_once 'classes/ApiResponse.php';
@@ -36,7 +32,7 @@ try {
                     echo ApiResponse::success($data, 'Brands retrieved successfully');
                     break;
                     
-                case 'subcategories':
+                case 'sub-categories':
                     $data = $oosService->getSubcategories();
                     echo ApiResponse::success($data, 'Subcategories retrieved successfully');
                     break;
@@ -120,6 +116,70 @@ try {
                         echo ApiResponse::error('EAN, ShopId, and ProductUrl parameters required', 400);
                     }
                     break;
+
+                    case 'check-ean':
+                    $input = json_decode(file_get_contents('php://input'), true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        echo ApiResponse::error('Invalid JSON in request body', 400);
+                        break;
+                    }
+                    $ean = $input['EAN'] ?? '';
+                    if ($ean) {
+                        $data = $oosService->getProductByEANwithIds($ean);
+                        if ($data) {        
+                            echo ApiResponse::success($data, 'Product retrieved successfully');
+                        } else {
+                            echo ApiResponse::success([],'Product not found');
+                        }
+                    } else {
+                        echo ApiResponse::error('EAN parameter required', 400);
+                    }
+                    break;
+
+                    case 'add-product':
+                    $input = json_decode(file_get_contents('php://input'), true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {    
+                        echo ApiResponse::error('Invalid JSON in request body', 400);
+                        break;
+                    }
+                    $ean = $input['EAN'] ?? '';
+                    $name = $input['name'] ?? '';
+                    $brandId = $input['brand_id'] ?? '';
+                    $categoryId = $input['category_id'] ?? '';
+                    $subcategoryId = $input['subcategory_id'] ?? '';
+                    if ($ean && $name && $brandId && $categoryId && $subcategoryId) {
+                        $result = $oosService->addProduct($ean, $name, $brandId, $categoryId, $subcategoryId);
+                        if ($result) {
+                            echo ApiResponse::success(null, 'Product added successfully');
+                        } else {
+                            echo ApiResponse::error('Failed to add product', 500);
+                        }
+                    } else {
+                        echo ApiResponse::error('All parameters are required', 400);
+                    }
+                    break;
+                    
+                    case 'add-product-link':
+                    $input = json_decode(file_get_contents('php://input'), true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        echo ApiResponse::error('Invalid JSON in request body', 400);
+                        break;
+                    }
+                    $ean = $input['EAN'] ?? '';
+                    $shopId = $input['shopId'] ?? '';
+                    $productUrl = $input['product_url'] ?? '';
+                    if ($ean && $shopId && $productUrl) {
+                        $result = $oosService->addProductLink($ean, $shopId, $productUrl);
+                        if ($result) {
+                            echo ApiResponse::success(null, 'Product link added successfully');
+                        } else {
+                            echo ApiResponse::error('Failed to add product link', 500);
+                        }
+                    } else {
+                        echo ApiResponse::error('EAN, ShopId, and ProductUrl parameters required', 400);
+                    }
+                    break;
+
                 default:
                     echo ApiResponse::error('Endpoint not found', 404);
             }
@@ -134,5 +194,4 @@ try {
     error_log("API Error: " . $e->getMessage());
     echo ApiResponse::error('Internal server error', 500, $e->getMessage());
 }
-?>
 

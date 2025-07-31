@@ -1,3 +1,69 @@
+<div class="dark-layer" id="newProductFormLayer" style="display: none">
+    <div class="container new-product-container mt-5">
+        <h2>Add New Product</h2>
+        <form id="newProductForm" class="form" onsubmit="return submitNewProductForm(event);">
+
+            <div class="filter-group form-group">
+                <label for="newEan">EAN</label>
+                <input type="text form-control w-100" id="newEan" name="newEan" required>
+            </div>
+            <div class="filter-group my-3 form-group">
+                <label>Brand</label>
+                <select class="w-100 form-control" id="brandDropdown2" name="newBrand" required>
+                    <option value="">Select Brand</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            <div class="filter-group my-3 form-group">
+                <label>Categories</label>
+                <select class="w-100 form-control" id="categoryDropdown2" name="newCategory" required>
+                    <option value="">Select Category</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            <div class="filter-group my-3 form-group">
+                <label for="newSubcategory">Subcategory</label>
+                <select class="w-100 form-control" id="subcategoryDropdown2" name="newSubcategory" required>
+                    <option value="">Select Subcategory</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            <div class="filter-group my-3 form-group">
+                <label for="name">Product Name</label>
+                <input class="w-100" type="text" id="newName" name="newName" required>
+            </div>
+
+            <div class="new-link-container mt-5 mb-1">
+                <h4>Add links</h4>
+                <div class="row">
+                    <div class="col-2">
+                        <label for="newshopSelect">Shop</label>
+                        <select class="form-control" id="newshopSelect" required>
+                            <option value="">Select Shop</option>
+                            <option value="1">Rossmann</option>
+                            <option value="2">DM</option>
+                            <option value="3">Kifli</option>
+                            <option value="4">Pepita</option>
+                        </select>
+                    </div>
+                    <div class="col-10">
+                        <label for="link">Product Link</label><br>
+                        <input type="text" class="w-100 form-control" id="newLink" name="newLink" required
+                            placeholder="https://example.com/product">
+                    </div>
+                </div>
+            </div>
+            <div class="my-3 m-auto">
+                <input type="submit" value="Add Product" class="btn btn-primary mt-3">
+                <button type="button" class="btn btn-secondary mt-3" onclick="closeNewProductForm()">Cancel</button>
+            </div>
+            <div id="newProductFeedback" class="feedback-message" style="display: none;"></div>
+        </form>
+    </div>
+
+</div>
+
+
 <div class="cust-container">
 
     <div class="header">
@@ -71,17 +137,24 @@
                     <option value="DESC">Descending</option>
                 </select>
             </div>
-            <div class="mx-auto mt-3">
-                <div class="oos-rate">
-                    <h4>Total OOS: <span id="oos-rate-score"></span></h4>
+
+
+            <div class="row mx-auto mt-3 w-100">
+                <div class="col-4"><button class="btn btn-success" onclick="openNewProductForm()">+ add
+                        product</button>
                 </div>
-                <div style="">
-                <button class="btn btn-primary" onclick="loadData()">🔍 Search</button>
-                <button class="btn btn-secondary" onclick="clearFilters()">🗑️ Clear</button>
-                <button class="btn btn-success" style="margin-left: 50px;" onclick="addProduct()">+ add product</button>
+                <div class="col-4">
+                    <h2>Total OOS: <span id="oos-rate-score"></span></h2>
+                </div>
+                <div class="col-4">
+                    <div style="float: right">
+                        <button class="btn btn-primary" onclick="loadData()">🔍 Search</button>
+                        <button class="btn btn-secondary" onclick="clearFilters()">🗑️ Clear</button>
+                    </div>
                 </div>
             </div>
         </div>
+
     </div>
 
     <div id="loadingIndicator" class="loading" style="display: none;">
@@ -91,10 +164,11 @@
 
     <div id="errorMessage" class="error-message" style="display: none;"></div>
     <div id="feedbackMessage" class="feedback-message" style="display: none;"></div>
- 
+
     <div class="result-count" style="position: relative;">
         <p id="resultCount"></p>
-           <img src="content/img/excel-icon.png" onclick="exportTableToExcel('dataTable', 'data')" id="excel-icon" alt="excel">
+        <img src="content/img/excel-icon.png" onclick="exportTableToExcel('dataTable', 'data')" id="excel-icon"
+            alt="excel">
     </div>
 
     <div class="table-container">

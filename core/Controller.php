@@ -12,13 +12,14 @@ abstract class Controller
             header("Location: index.php?p=login");
             exit();
         }
-
+/*
         $requestUri = $_SERVER['REQUEST_URI'];
         if (strpos($requestUri, '/api/') !== false || (isset($_GET['api']) && $_GET['api'] === '1')) {
             self::HandleApiRequest();
             return; // Exit early, don't process as regular page
         }
-
+            
+*/
 
         $page = $cfg["mainPage"];
         if(isset($_GET[$cfg["pageKey"]]))
@@ -211,7 +212,7 @@ abstract class Controller
             echo ApiResponse::error('Internal server error', 500);
         } finally {
             try {
-                DBHandler::Disconnect();
+                //DBHandler::Disconnect();
             } catch (Exception $ex) {
                 // do nothing...
             }

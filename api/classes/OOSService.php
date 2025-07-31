@@ -198,31 +198,17 @@ ORDER BY b.name, c.name, sc.name, p.name;";
         }
     }
 
-    public function addProduct($ean, $name, $brandId, $categoryId, $subcategoryId, $url, $shopId): bool {
+    public function addProduct($ean, $name, $brandId, $categoryId, $subcategoryId): bool {
         try {
-            $checkQuery = "SELECT COUNT(*) FROM products WHERE ean = :ean";
-            $checkStmt = $this->db->prepare($checkQuery);
-            $checkStmt->execute([':ean' => $ean]);
-            if ($checkStmt->fetchColumn() > 0) {
-               //uplad only shop URL if product already exists
-                $urlQuery = "INSERT INTO urls (ean, shop_id, url) VALUES (:ean, :shopId, :url)";
-                $urlStmt = $this->db->prepare($urlQuery);
-                return $urlStmt->execute([':ean' => $ean, ':shopId' => $shopId, ':url' => $url]);
-            }
-            else {
                 $query = "INSERT INTO products (ean, name, brand_id, category_id, subcategory_id) VALUES (:ean, :name, :brandId, :categoryId, :subcategoryId)";
                 $stmt = $this->db->prepare($query);
-                $stmt->execute([
+                return $stmt->execute([
                     ':ean' => $ean,
                     ':name' => $name,
                     ':brandId' => $brandId,
                     ':categoryId' => $categoryId,
                     ':subcategoryId' => $subcategoryId
                 ]);
-                $urlQuery = "INSERT INTO urls (ean, shop_id, url) VALUES (:ean, :shopId, :url)";
-                $urlStmt = $this->db->prepare($urlQuery);
-                return $urlStmt->execute([':ean' => $ean, ':shopId' => $shopId, ':url' => $url]);
-            }
         } catch (Exception $e) {
             error_log("Error in addProduct: " . $e->getMessage());
             throw new Exception("Failed to add product");
@@ -239,4 +225,53 @@ ORDER BY b.name, c.name, sc.name, p.name;";
             throw new Exception("Failed to update product URL");
         }
     }
+
+    public function getProductByEANwithIds($ean): array {
+        try {
+            $query = "SELECT 
+                p.ean,
+                p.name,
+                b.id AS brand_id,
+                b.name AS brand_name,
+                c.id AS category_id,
+                c.name AS category_name,
+                sc.id AS subcategory_id,
+                sc.name AS subcategory_name
+            FROM products p
+            LEFT JOIN brands b ON p.brand_id = b.id
+            LEFT JOIN categories c ON p.category_id = c.id
+            LEFT JOIN subcategories sc ON p.subcategory_id = sc.id
+            WHERE p.ean = :ean";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->execute([':ean' => $ean]);
+            return $stmt->fetchAll();
+        } catch (Exception $e) {
+            error_log("Error in getProductByEANwithIds: " . $e->getMessage());
+            throw new Exception("Failed to fetch product by EAN");
+        }
+    }
+
+    public function addProductLink($ean, $shopId, $productUrl): bool {
+        try {
+            // Check if the link already exists
+            $checkQuery = "SELECT COUNT(*) FROM urls WHERE ean = :ean AND shop_id = :shopId";
+            $checkStmt = $this->db->prepare($checkQuery);
+            $checkStmt->execute([':ean' => $ean, ':shopId' => $shopId]);
+            if ($checkStmt->fetchColumn() > 0) {
+                // Optionally, update the URL if it already exists
+                $updateQuery = "UPDATE urls SET url = :url WHERE ean = :ean AND shop_id = :shopId";
+                $updateStmt = $this->db->prepare($updateQuery);
+                return $updateStmt->execute([':url' => $productUrl, ':ean' => $ean, ':shopId' => $shopId]);
+            }
+            $query = "INSERT INTO urls (ean, shop_id, url) VALUES (:ean, :shopId, :url)";
+            $stmt = $this->db->prepare($query);
+            return $stmt->execute([':ean' => $ean, ':shopId' => $shopId, ':url' => $productUrl]);
+        } catch (Exception $e) {
+            error_log("Error in addProductLink: " . $e->getMessage());
+            throw new Exception("Failed to add product link");
+        }
+    }
+    
+
 }
