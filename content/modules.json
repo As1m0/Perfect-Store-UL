@@ -1,6 +1,8 @@
 {
-    "NavModule":
-            {
-                "enabled" : true
-            }
+    "NavModule": {
+        "enabled": true
+    },
+    "OOSChartModule": {
+        "enabled": true
+    }
 }

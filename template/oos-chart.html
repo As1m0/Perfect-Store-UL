@@ -1,0 +1,54 @@
+<div class="chart-container">
+    <h4 class="text-center mt-3">Out of Stock riport</h4>
+    <canvas id="myChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+
+    async function loadChartData(startDate = null, endDate = null) {
+        try {
+            let url = `${API_BASE_URL}/chart-data`;
+            if (startDate || endDate) {
+                const params = new URLSearchParams();
+                if (startDate) params.append('start_date', startDate);
+                if (endDate) params.append('end_date', endDate);
+                url += `&${params.toString()}`;
+            }
+
+            const response = await fetch(url);
+            const responseData = await response.json();
+
+            if (responseData.success) {
+                return responseData.data;
+            } else {
+                throw new Error(responseData.message);
+            }
+        } catch (error) {
+            console.error('Error loading chart data:', error);
+            throw error;
+        }
+    }
+
+    const ctx = document.getElementById('myChart');
+
+    (async function () {
+        const Chartdata = await loadChartData();
+        console.log('Chart data:', Chartdata);
+        new Chart(ctx, {
+            type: 'line',
+            data: Chartdata,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    },
+                    responsive: true, // If you want to use HTML/CSS width/height
+                    maintainAspectRatio: false, // Needed if you set CSS height manually
+                }
+            }
+        });
+    })();
+</script>

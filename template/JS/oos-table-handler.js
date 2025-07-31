@@ -1,7 +1,4 @@
 
-// Configuration
-const API_BASE_URL = './api/index.php'; // Updated for no mod_rewrite
-
 // State management
 let currentData = [];
 let categories = [];

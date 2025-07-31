@@ -12,6 +12,7 @@ class IndexPage implements IPageBase
     public function Run(array $pageData): void
     {
         $this->template = Template::Load($pageData["template"]);
+        $this->template->AddData("OOSCHART", Template::Load("oos-chart.html"));
     }
 
 }
