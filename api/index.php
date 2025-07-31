@@ -47,6 +47,14 @@ try {
                     $data = $oosService->getSummaryStats((int)$shopId);
                     echo ApiResponse::success($data, 'Summary statistics retrieved successfully');
                     break;
+
+
+                case 'chart-data':
+                    $startDate = $_GET['start_date'] ?? null;
+                    $endDate = $_GET['end_date'] ?? null;
+                    $data = $oosService->getOOSChartData($startDate, $endDate);
+                    echo ApiResponse::success($data, 'Chart data retrieved successfully');
+                    break;
                     
                 default:
                     echo ApiResponse::error('Endpoint not found', 404);

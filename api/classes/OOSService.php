@@ -155,26 +155,26 @@ class OOSService {
 
     public function getProductByEAN($ean): array{
         try {
-            $query = "SELECT 
-    b.name AS brand,
-    c.name AS category,
-    sc.name AS subcategory,
-    p.ean,
-    p.name,
-    GROUP_CONCAT(
-        CONCAT(s.name, ': ', u.url) 
-        ORDER BY s.name 
-        SEPARATOR ' | '
-    ) AS urls
-FROM products p
-LEFT JOIN brands b ON p.brand_id = b.id
-LEFT JOIN categories c ON p.category_id = c.id
-LEFT JOIN subcategories sc ON p.subcategory_id = sc.id
-LEFT JOIN urls u ON p.ean = u.ean
-LEFT JOIN shops s ON u.shop_id = s.id
-WHERE p.ean = {$ean}  -- Only active URLs
-GROUP BY p.ean, b.name, c.name, sc.name, p.name
-ORDER BY b.name, c.name, sc.name, p.name;";
+                    $query = "SELECT 
+            b.name AS brand,
+            c.name AS category,
+            sc.name AS subcategory,
+            p.ean,
+            p.name,
+            GROUP_CONCAT(
+                CONCAT(s.name, ': ', u.url) 
+                ORDER BY s.name 
+                SEPARATOR ' | '
+            ) AS urls
+        FROM products p
+        LEFT JOIN brands b ON p.brand_id = b.id
+        LEFT JOIN categories c ON p.category_id = c.id
+        LEFT JOIN subcategories sc ON p.subcategory_id = sc.id
+        LEFT JOIN urls u ON p.ean = u.ean
+        LEFT JOIN shops s ON u.shop_id = s.id
+        WHERE p.ean = {$ean}  -- Only active URLs
+        GROUP BY p.ean, b.name, c.name, sc.name, p.name
+        ORDER BY b.name, c.name, sc.name, p.name;";
             $stmt = $this->db->prepare($query);
             $stmt->execute();
             return $stmt->fetchAll();
@@ -272,6 +272,115 @@ ORDER BY b.name, c.name, sc.name, p.name;";
             throw new Exception("Failed to add product link");
         }
     }
+
+    public function getOOSChartData($startDate = null, $endDate = null) {
+    try {
+        $whereClause = "";
+        $params = [];
+        
+        if ($startDate && $endDate) {
+            $whereClause = "WHERE h.date_checked BETWEEN ? AND ?";
+            $params = [$startDate, $endDate];
+        } elseif ($startDate) {
+            $whereClause = "WHERE h.date_checked >= ?";
+            $params = [$startDate];
+        } elseif ($endDate) {
+            $whereClause = "WHERE h.date_checked <= ?";
+            $params = [$endDate];
+        }
+        
+        $query = "
+        SELECT 
+            s.name AS shop_name,
+            s.id AS shop_id,
+            h.date_checked,
+            ROUND(
+                (COUNT(CASE WHEN h.is_available = 1 THEN 1 END) * 100.0 / COUNT(*)), 
+                2
+            ) AS availability_percentage
+        FROM oos_history h
+        INNER JOIN shops s ON h.shop_id = s.id
+        {$whereClause}
+        GROUP BY s.id, s.name, h.date_checked
+        ORDER BY h.date_checked ASC, s.name ASC";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->execute($params);
+        $results = $stmt->fetchAll();
+        
+        // Transform data for chart format
+        $chartData = $this->transformToChartData($results);
+        
+        return $chartData;
+        
+        } catch (Exception $e) {
+            error_log("Error in getOOSChartData: " . $e->getMessage());
+            throw new Exception("Failed to fetch OOS chart data");
+        }
+    }
+
+    private function transformToChartData($results) {
+        $labels = [];
+        $shopData = [];
+        
+        // Process results
+        foreach ($results as $row) {
+            $date = $row['date_checked'];
+            $shopName = $row['shop_name'];
+            $percentage = (float) $row['availability_percentage'];
+            
+            // Collect unique dates for labels
+            if (!in_array($date, $labels)) {
+                $labels[] = $date;
+            }
+            
+            // Initialize shop data if not exists
+            if (!isset($shopData[$shopName])) {
+                $shopData[$shopName] = [];
+            }
+            
+            $shopData[$shopName][$date] = $percentage;
+        }
+        
+        // Sort labels chronologically
+        sort($labels);
+        
+        // Create datasets
+        $datasets = [];
+        $colors = [
+            '#667eea', '#764ba2', '#f093fb', '#f5576c', 
+            '#4facfe', '#00f2fe', '#43e97b', '#38f9d7',
+            '#ffecd2', '#fcb69f', '#a8edea', '#fed6e3'
+        ];
+        
+        $colorIndex = 0;
+        foreach ($shopData as $shopName => $data) {
+            $dataPoints = [];
+            
+            // Fill data points for each date
+            foreach ($labels as $date) {
+                $dataPoints[] = isset($data[$date]) ? $data[$date] : null;
+            }
+            
+            $datasets[] = [
+                'label' => $shopName,
+                'data' => $dataPoints,
+                'borderColor' => $colors[$colorIndex % count($colors)],
+                'backgroundColor' => $colors[$colorIndex % count($colors)] . '20', // Add transparency
+                'borderWidth' => 2,
+                'fill' => false,
+                'tension' => 0.1
+            ];
+            
+            $colorIndex++;
+        }
+        
+        return [
+            'labels' => $labels,
+            'datasets' => $datasets
+        ];
+    }
+
     
 
 }
