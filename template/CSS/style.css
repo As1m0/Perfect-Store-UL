@@ -39,7 +39,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background:  #a7afd3;
 }
 
 #shopSelect{
@@ -51,9 +51,6 @@ body {
     position: absolute;
     left: 30px;
     color: rgb(93, 93, 93);
-}
-
-#oos-rate-score{
 }
 
 .cust-container {
@@ -95,10 +92,12 @@ body {
 }
 
 .filter-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 10px;
-    margin-bottom: 20px;
+display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    justify-content:center;
+    align-items: center;
+    margin-bottom: 15px;
 }
 
 .filter-group {
@@ -214,7 +213,7 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #2039c6;
     color: white;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
@@ -363,6 +362,21 @@ body {
     border: 1px solid #d6d8db;
 }
 
+.navbar{
+    background-color: #2039c6;
+}
+
+.navbar a, li, p{
+    color: white;
+}
+
+#noDataMessage p {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+    font-size: 1.1rem;
+}
+
 .percentage-bar {
     width: 100%;
     height: 20px;
@@ -374,7 +388,7 @@ body {
 
 .percentage-fill {
     height: 100%;
-    background: linear-gradient(90deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
+    background-color: #2039c6;
     transition: width 0.3s ease;
     border-radius: 10px;
 }
@@ -398,10 +412,11 @@ body {
     text-align: center;
     margin: 10px 0;
     margin-bottom: 8px;;
-    font-size: 1.1rem;
-    color: #495057;
+
 }
 .result-count p {
+        font-size: 1.1rem;
+    color: #798087;
     margin: 0;
 }
 
@@ -455,6 +470,10 @@ body {
     padding: 60px 20px;
     color: #6c757d;
     font-size: 1.1rem;
+}
+
+.fix-height{
+    height: 115px !important;
 }
 
 @media (max-width: 768px) {

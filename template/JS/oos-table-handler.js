@@ -77,11 +77,30 @@ function setupEventListeners() {
 async function loadInitialData() {
     try {
         // Load categories and brands for filters
-        const [categoriesResponse, subCategoriesResponse, brandsResponse] = await Promise.all([
+        const [shopresponese, categoriesResponse, subCategoriesResponse, brandsResponse] = await Promise.all([
+            fetch(`${API_BASE_URL}/shops`),
             fetch(`${API_BASE_URL}/categories`),
             fetch(`${API_BASE_URL}/sub-categories`),
             fetch(`${API_BASE_URL}/brands`)
         ]);
+
+        if (shopresponese.ok) {
+            const shopData = await shopresponese.json();
+            shops = shopData.success ? shopData.data : [];
+            const dropDowns = [document.getElementById('shopDropdown'), document.getElementById('newshopSelect')];
+            for (const dropdown of dropDowns) {
+                if (!dropdown) continue;
+                shops.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id; // Assuming each item has an 'id' field
+                    if (item.id === 3) {
+                        option.selected = true; // Select Kifli by default
+                    }
+                    option.textContent = item.name ? item.name.toUpperCase() : '';
+                    dropdown.appendChild(option);
+                });
+            }
+        }
 
         if (categoriesResponse.ok) {
             const categoriesData = await categoriesResponse.json();
@@ -177,7 +196,7 @@ function populateMultiSelect(type, data, textField) {
     });
 }
 
-function populateNewProductSelect(type, data, textField) {
+function populateNewProductSelect(type, data, textField, elementName = 'Dropdown2') {
     const dropdown = document.getElementById(`${type}Dropdown2`);
     data.forEach(item => {
         const option = document.createElement('option');
@@ -227,7 +246,7 @@ async function loadData() {
 
     try {
         const requestData = {
-            shopId: parseInt(document.getElementById('shopSelect').value),
+            shopId: parseInt(document.getElementById('shopDropdown').value),
             filters: {},
             sort: {
                 column: document.getElementById('sortColumn').value,
@@ -304,7 +323,7 @@ function displayData(data) {
     noDataMessage.style.display = 'none';
 
     tableBody.innerHTML = '';
-    
+
     data.forEach(row => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -317,8 +336,8 @@ function displayData(data) {
             <td>${getPercentageBar(row.oos_percentage)}</td>
             <td><strong>${row.days_oos * 7}</strong></td>
             <td>
-            <button class="edit-url-btn" onclick="editUrl('${row.ean}', '${document.getElementById('shopSelect').value}', '${row.product_url}')">EDIT</button>
-            <button class="untrack-btn" onclick="untrackProduct('${row.ean}', '${document.getElementById('shopSelect').value}')">UNTRACK</button>
+            <button class="edit-url-btn" onclick="editUrl('${row.ean}', '${document.getElementById('shopDropdown').value}', '${row.product_url}')">EDIT</button>
+            <button class="untrack-btn" onclick="untrackProduct('${row.ean}', '${document.getElementById('shopDropdown').value}')">UNTRACK</button>
             </td>
         `;
         tableBody.appendChild(tr);
@@ -432,6 +451,8 @@ function clearFilters() {
     // Reset sort
     document.getElementById('sortColumn').value = 'category';
     document.getElementById('sortDirection').value = 'ASC';
+
+    document.getElementById('searchName').value = '';
 
     // Load data
     loadData();

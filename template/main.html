@@ -38,12 +38,9 @@
                 <div class="row">
                     <div class="col-2">
                         <label for="newshopSelect">Shop</label>
-                        <select class="form-control" id="newshopSelect" required>
+                        <select class="form-control" id="newshopSelect" required>  
                             <option value="">Select Shop</option>
-                            <option value="1">Rossmann</option>
-                            <option value="2">DM</option>
-                            <option value="3">Kifli</option>
-                            <option value="4">Pepita</option>
+                            <!-- Options will be populated dynamically -->
                         </select>
                     </div>
                     <div class="col-10">
@@ -73,17 +70,15 @@
 
     <div class="filters">
         <div class="filter-grid">
-            <div class="filter-group">
-                <label for="shopSelect">Shop</label>
-                <select id="shopSelect">
-                    <option value="1">Rossmann</option>
-                    <option value="2">DM</option>
-                    <option value="3" selected>Kifli</option>
-                    <option value="4">Pepita</option>
+            <div class="filter-group fix-height">
+                <label for="shopDropdown">Shop</label>
+                <select id="shopDropdown" class="form-control w-100">
+                    <option value="">Select Shop</option>
+                    <!-- Options will be populated dynamically -->
                 </select>
             </div>
 
-            <div class="filter-group">
+            <div class="filter-group fix-height">
                 <label>Categories</label>
                 <div class="multi-select" id="categorySelect">
                     <input type="text" placeholder="Select categories..." readonly>
@@ -92,7 +87,7 @@
                 </div>
             </div>
 
-            <div class="filter-group">
+            <div class="filter-group fix-height">
                 <label>Brands</label>
                 <div class="multi-select" id="brandSelect">
                     <input type="text" placeholder="Select brands..." readonly>
@@ -101,7 +96,7 @@
                 </div>
             </div>
 
-            <div class="filter-group">
+            <div class="filter-group fix-height">
                 <label>Status</label>
                 <div class="multi-select" id="statusSelect">
                     <input type="text" placeholder="Select status..." readonly>
@@ -114,9 +109,9 @@
                 </div>
             </div>
 
-            <div class="filter-group">
-                <label>Search name</label>
-                <input type="text" id="searchName" placeholder="Search by product name...">
+            <div class="filter-group fix-height">
+                <label>Search by name</label>
+                <input type="text" id="searchName" placeholder="Search by product name..." style="min-width: 400px;">
             </div>
         </div>
 
@@ -143,8 +138,8 @@
                 <div class="col-4"><button class="btn btn-success" onclick="openNewProductForm()">+ add
                         product</button>
                 </div>
-                <div class="col-4">
-                    <h2>Total OOS: <span id="oos-rate-score"></span></h2>
+                <div class="col-4 text-center">
+                    <h2 style="color: gray">Total OOS: <span id="oos-rate-score"></span></h2>
                 </div>
                 <div class="col-4">
                     <div style="float: right">
@@ -179,7 +174,7 @@
                     <th class="sortable" data-column="subcategory">Subcategory</th>
                     <th class="sortable" data-column="brand">Brand</th>
                     <th class="sortable" data-column="ean">EAN</th>
-                    <th class="sortable" data-column="name">Product Name</th>
+                    <th class="sortable" data-column="name" style="width: 500px;">Product Name</th>
                     <th class="sortable" data-column="last_status">Status</th>
                     <th class="sortable" data-column="oos_percentage">Availability</th>
                     <th class="sortable" data-column="days_oos">Days OOS</th>
