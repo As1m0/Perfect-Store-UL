@@ -1,21 +1,14 @@
 <?php
-
-// config/database.php
 class Database {
-    
-    private $host = 'localhost';
-    private $db_name = 'OOS';
-    private $username = 'website';
-    private $password = 'gehNuf-nakjiz-wamna3';
-    private $conn;
+    private $conn = "";
 
-    public function getConnection() {
+    public function getConnection($cfg) {
         $this->conn = null;
         try {
             $this->conn = new PDO(
-                "mysql:host=" . $this->host . ";dbname=" . $this->db_name . ";charset=utf8mb4",
-                $this->username,
-                $this->password,
+                "mysql:host=" . $cfg["db"]["hostname"] . ";dbname=" . $cfg["db"]["db"] . ";charset=utf8mb4",
+                $cfg["db"]["username"],
+                $cfg["db"]["pass"],
                 [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,

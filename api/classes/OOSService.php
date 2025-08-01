@@ -2,9 +2,9 @@
 class OOSService {
     private $db;
 
-    public function __construct() {
+    public function __construct($cfg) {
         $database = new Database();
-        $this->db = $database->getConnection();
+        $this->db = $database->getConnection($cfg);
     }
 
     /**
@@ -348,7 +348,7 @@ class OOSService {
         // Create datasets
         $datasets = [];
         $colors = [
-            '#667eea', '#764ba2', '#f093fb', '#f5576c', 
+            '#667eea', '#e4a752', '#f5576c', '#a8edea', 
             '#4facfe', '#00f2fe', '#43e97b', '#38f9d7',
             '#ffecd2', '#fcb69f', '#a8edea', '#fed6e3'
         ];

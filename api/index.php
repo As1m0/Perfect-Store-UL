@@ -5,12 +5,14 @@ require_once 'classes/QueryGenerator.php';
 require_once 'classes/ApiResponse.php';
 require_once 'classes/OOSService.php';
 require_once 'config/database.php';
+require_once '../config.php';
 
 // Set headers
 ApiResponse::sendHeaders();
 
 try {
-    $oosService = new OOSService();
+    global $cfg;
+    $oosService = new OOSService($cfg);
     $requestUri = $_SERVER['REQUEST_URI'];
     $requestMethod = $_SERVER['REQUEST_METHOD'];
     
@@ -48,13 +50,6 @@ try {
                     echo ApiResponse::success($data, 'Summary statistics retrieved successfully');
                     break;
 
-
-                case 'chart-data':
-                    $startDate = $_GET['start_date'] ?? null;
-                    $endDate = $_GET['end_date'] ?? null;
-                    $data = $oosService->getOOSChartData($startDate, $endDate);
-                    echo ApiResponse::success($data, 'Chart data retrieved successfully');
-                    break;
                     
                 default:
                     echo ApiResponse::error('Endpoint not found', 404);
@@ -187,6 +182,18 @@ try {
                         echo ApiResponse::error('EAN, ShopId, and ProductUrl parameters required', 400);
                     }
                     break;
+
+                    case 'chart-data':
+                        $input = json_decode(file_get_contents('php://input'), true);
+                        if (json_last_error() !== JSON_ERROR_NONE) {
+                            echo ApiResponse::error('Invalid JSON in request body', 400);
+                            break;
+                        }
+                        $startDate = $input['start_date'] ?? null;
+                        $endDate = $input['end_date'] ?? null;
+                        $data = $oosService->getOOSChartData($startDate, $endDate);
+                        echo ApiResponse::success($data, 'Chart data retrieved successfully');
+                        break;
 
                 default:
                     echo ApiResponse::error('Endpoint not found', 404);

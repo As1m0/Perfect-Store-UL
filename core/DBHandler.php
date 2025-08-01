@@ -68,7 +68,6 @@ abstract class DBHandler
             {
             return self::$con->insert_id;
             }
-
             return $stmt->get_result();
         }
         catch (Exception $ex)

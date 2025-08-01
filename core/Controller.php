@@ -12,14 +12,6 @@ abstract class Controller
             header("Location: index.php?p=login");
             exit();
         }
-/*
-        $requestUri = $_SERVER['REQUEST_URI'];
-        if (strpos($requestUri, '/api/') !== false || (isset($_GET['api']) && $_GET['api'] === '1')) {
-            self::HandleApiRequest();
-            return; // Exit early, don't process as regular page
-        }
-            
-*/
 
         $page = $cfg["mainPage"];
         if(isset($_GET[$cfg["pageKey"]]))
@@ -50,12 +42,13 @@ abstract class Controller
                     }
                     else
                     {
-                        if(isset($_SESSION["loggedIn"]))
+                        if(isset($_SESSION["loggedIn"]) && $page !== "login")
                         {
                             //Add the navigation module only if the user is logged in
                             View::getBaseTemplate()->AddData($cfg["defaultNavFlag"], Controller::RunModule("NavModule"));
                         }
                         View::getBaseTemplate()->AddData($cfg["defaultContentFlag"], $result);
+                        View::getBaseTemplate()->AddData("APIBASEURL", $cfg["api"]["baseUrl"]);
                        //View::getBaseTemplate()->AddData($cfg["defaultFooterFlag"], Template::Load("footer.html"));
                     }
                 }
@@ -136,87 +129,4 @@ abstract class Controller
         }
     }
 
-    private static function HandleApiRequest() : void
-    {
-        try {
-            //DBHandler::Init();
-            
-            // Set API headers
-            header('Content-Type: application/json');
-            header('Access-Control-Allow-Origin: *');
-            header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-            header('Access-Control-Allow-Headers: Content-Type, Authorization');
-            
-            if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-                http_response_code(200);
-                exit();
-            }
-            
-            $endpoint = $_GET['endpoint'] ?? '';
-            $requestMethod = $_SERVER['REQUEST_METHOD'];
-            $oosService = new OOSService();
-            
-            // Handle API routing
-            switch ($requestMethod) {
-                case 'GET':
-                    switch ($endpoint) {
-                        case 'categories':
-                            $data = $oosService->getCategories();
-                            echo ApiResponse::success($data, 'Categories retrieved successfully');
-                            break;
-                        case 'brands':
-                            $data = $oosService->getBrands();
-                            echo ApiResponse::success($data, 'Brands retrieved successfully');
-                            break;
-                        case 'product':
-                            $ean = $_GET['ean'] ?? '';
-                            if ($ean) {
-                                $data = $oosService->getProductByEAN($ean);
-                                echo ApiResponse::success($data, 'Product retrieved successfully');
-                            } else {
-                                echo ApiResponse::error('EAN parameter required', 400);
-                            }
-                            break;
-                        default:
-                            echo ApiResponse::error('Endpoint not found', 404);
-                    }
-                    break;
-                    
-                case 'POST':
-                    switch ($endpoint) {
-                        case 'oos-data':
-                            $input = json_decode(file_get_contents('php://input'), true);
-                            if (json_last_error() !== JSON_ERROR_NONE) {
-                                echo ApiResponse::error('Invalid JSON in request body', 400);
-                                break;
-                            }
-                            $options = [
-                                'shopId' => $input['shopId'] ?? 3,
-                                'filters' => $input['filters'] ?? [],
-                                'sort' => $input['sort'] ?? ['column' => 'category', 'direction' => 'ASC']
-                            ];
-                            $data = $oosService->getOOSData($options);
-                            echo ApiResponse::success($data, 'OOS data retrieved successfully');
-                            break;
-                        default:
-                            echo ApiResponse::error('Endpoint not found', 404);
-                    }
-                    break;
-                    
-                default:
-                    echo ApiResponse::error('Method not allowed', 405);
-            }
-            
-        } catch (Exception $e) {
-            error_log("API Error: " . $e->getMessage());
-            echo ApiResponse::error('Internal server error', 500);
-        } finally {
-            try {
-                //DBHandler::Disconnect();
-            } catch (Exception $ex) {
-                // do nothing...
-            }
-        }
-        exit(); // Important: stop execution after API response
-    }
 }

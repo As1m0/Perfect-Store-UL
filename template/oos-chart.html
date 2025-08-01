@@ -1,5 +1,12 @@
 <div class="chart-container">
     <h4 class="text-center mt-3">Out of Stock riport</h4>
+    <div class="text-center mb-3">
+        <label class="text-muted small" for="startDate">Start Date:</label>
+        <input type="date" class="date-input" id="startDate" name="startDate" value="">
+        <label class="text-muted small" for="endDate">End Date:</label>
+        <input type="date" class="date-input" id="endDate" name="endDate" value="">
+        <button class="btn-small " id="loadChartDataBtn">Refresh Chart</button>
+    </div>
     <canvas id="myChart"></canvas>
 </div>
 
@@ -7,48 +14,85 @@
 
 <script>
 
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    const loadChartDataBtn = document.getElementById('loadChartDataBtn');
+    const ctxElement = document.getElementById('myChart');
+    const ctx = ctxElement.getContext('2d');
+    let chartInstance = null;
+
+    loadChartDataBtn.addEventListener('click', async () => {
+        const startDate = startDateInput.value || null;
+        const endDate = endDateInput.value || null;
+
+        const chartData = await loadChartData(startDate, endDate);
+        if (chartData) {
+            DrawChartData(chartData);
+        }
+    });
 
     async function loadChartData(startDate = null, endDate = null) {
         try {
-            let url = `${API_BASE_URL}/chart-data`;
-            if (startDate || endDate) {
-                const params = new URLSearchParams();
-                if (startDate) params.append('start_date', startDate);
-                if (endDate) params.append('end_date', endDate);
-                url += `&${params.toString()}`;
+            const response = await fetch(`${API_BASE_URL}/chart-data`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    start_date: startDate,
+                    end_date: endDate
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            const response = await fetch(url);
             const responseData = await response.json();
 
-            if (responseData.success) {
-                return responseData.data;
-            } else {
-                throw new Error(responseData.message);
+            if (!responseData.success) {
+                throw new Error(responseData.message || 'API returned error');
             }
+
+            return responseData;
         } catch (error) {
-            console.error('Error loading chart data:', error);
-            throw error;
+            console.error('Error getting chart data:', error);
+            return null;
         }
     }
 
-    const ctx = document.getElementById('myChart');
+    function DrawChartData(chartData) {
+        console.log('Chart data:', chartData);
 
-    (async function () {
-        const Chartdata = await loadChartData();
-        console.log('Chart data:', Chartdata);
-        new Chart(ctx, {
+        // Destroy existing chart if any
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        chartInstance = new Chart(ctx, {
             type: 'line',
-            data: Chartdata,
+            data: chartData.data,
             options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                     y: {
                         beginAtZero: true
-                    },
-                    responsive: true, // If you want to use HTML/CSS width/height
-                    maintainAspectRatio: false, // Needed if you set CSS height manually
+                    }
                 }
             }
         });
+    }
+
+    // Initial chart load
+    (async () => {
+        const chartData = await loadChartData();
+        if (chartData) {
+            DrawChartData(chartData);
+        }
     })();
+
+
+    console.log("chart height: "+ctxElement.style.height);
+
 </script>

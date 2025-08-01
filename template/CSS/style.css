@@ -4,17 +4,63 @@
     box-sizing: border-box;
 }
 
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background:  #ffffff;
+}
+
 .chart-container {
+   width: 100%;
+      max-width: 1000px;
+      height: 370px;
+      margin: 20px auto;
+      padding-bottom: 80px;
+}
+
+.bg-fill{
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 300px;
-    margin: 20px auto;
-    padding-bottom: 20px;
-    display: block;
+    height: 100%;
+    z-index: -1;
+    background-color: #6a79cf;
+}
+
+.login-feedback{
+    position: fixed;
+    top: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 25px 35px;
+    border-radius: 5px;
+    z-index: 1000;
+    transition: opacity 0.3s ease-in-out;
+    color: white;
+}
+
+.btn-small {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    border-radius: 5px;
+    background-color: #2039c6;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.date-input {
+    padding: 2px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    margin-right: 10px;
 }
 
 #myChart {
-    margin: 0 auto;
     width: 100%;
+    height: 300px;
 }
 
 
@@ -49,11 +95,6 @@
     background-color: white;
 }
 
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background:  #a7afd3;
-}
 
 #shopSelect{
     height: 52px;
@@ -213,7 +254,7 @@ display: flex;
 }
 
 .btn {
-    padding: 12px 24px;
+    padding: 8px 18px;
     border: none;
     border-radius: 25px;
     font-size: 1rem;
@@ -298,7 +339,7 @@ display: flex;
 }
 
 .data-table th:hover {
-    background: linear-gradient(135deg, #3a4045 0%, #5a6268 100%);
+   
 }
 
 .data-table th.sortable::after {
@@ -434,10 +475,10 @@ display: flex;
 
 .untrack-btn {
     width: 80px;
-    background: #dc3545;
-    color: white;
+    background: transparent;
+    color: #dc3545;
     padding: 2px 6px;
-    border: none;
+    border: 1px solid #dc3545;
     border-radius: 5px;
     cursor: pointer;
     font-size: 0.9rem;
@@ -445,9 +486,13 @@ display: flex;
     transition: background-color 0.3s ease;
 }
 
+.untrack-btn:hover, .edit-url-btn:hover{
+    opacity: 0.8;
+}
+
 .edit-url-btn {
     width: 80px;
-    background: rgb(102, 126, 234);
+    background: #a7afd3;
     color: white;
     padding: 2px 6px;
     border: none;

@@ -28,3 +28,6 @@ $cfg["db"]["username"] = "website";
 $cfg["db"]["pass"] = "gehNuf-nakjiz-wamna3";
 $cfg["db"]["db"] = "OOS";
 $cfg["db"]["port"] = "3306";
+
+//API
+$cfg["api"]["baseUrl"] = "./api/index.php";

@@ -13,6 +13,8 @@ class LoginPage implements IPageBase
     {
         $this->template = Template::Load($pageData["template"]);
 
+        $this->template->AddData("DISPLAY", "none");  
+
         if(isset($_POST["login"]))
         {
             if(isset($_POST["email"]) && trim($_POST["email"]) != "" && isset($_POST["pass"]) && trim($_POST["pass"]) != "")
@@ -26,47 +28,36 @@ class LoginPage implements IPageBase
                     {
                         $result["login"]["info"] = "Logged in successfully!";
                         $result["login"]["success"] = true;
-                        if(isset($_GET["v"])&& $_GET["v"] != "")
-                        {
-                            $_SESSION["visitedPage"] = "?p=".htmlspecialchars($_GET["v"]);
-                        }
                     }
                     else
                     {
                         $result["login"]["info"] = "Wrong acccount / password!";
+                        $result["login"]["success"] = false;
                     }
                 }
             }
             else
             {
                 $result["login"]["info"] = "Missing data!";
+                $result["login"]["success"] = false;
             }
         }
 
         global $cfg;
 
-        if(isset($result["login"]["info"])){
+        if(isset($result["login"])){
             $this->template->AddData("RESULT", $result["login"]["info"]);
+            $this->template->AddData("DISPLAY", "block");  
             if(isset($result["login"]["success"]) && $result["login"]["success"] !== false)
             {
                 $this->template->AddData("COLOR", "green");
+                $this->template->AddData("SCRIPT", "<script>window.setTimeout(function(){window.location.href='{$cfg["mainPage"]}.php';}, 1500);</script>");
             } else
             {
                 $this->template->AddData("COLOR", "red");
+                $this->template->AddData("SCRIPT", "<script>window.setTimeout(function(){window.location.href='{$cfg["mainPage"]}.php?p=login';}, 1500);</script>");
             }
         }
 
-
-        if( isset($result["login"]["success"]) && $result["login"]["success"] !== false)
-        {
-            if(isset($_SESSION["visitedPage"]) && $_SESSION["visitedPage"] !== "")
-            {
-                 $this->template->AddData("SCRIPT", "<script>window.setTimeout(function(){window.location.href='{$_SESSION["visitedPage"]}';}, 1500);</script>");
-            }
-            else
-            {
-                $this->template->AddData("SCRIPT", "<script>window.setTimeout(function(){window.location.href='{$cfg["mainPage"]}.php';}, 1500);</script>");
-            }
-        }
     }
 }
