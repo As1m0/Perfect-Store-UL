@@ -117,7 +117,7 @@ async function loadInitialData() {
             const subCategoriesData = await subCategoriesResponse.json();
             subCategories = subCategoriesData.success ? subCategoriesData.data : [];
             populateNewProductSelect('subcategory', subCategories, 'name');
-            console.log('Subcategories loaded:', subCategories);
+            //console.log('Subcategories loaded:', subCategories);
         }
 
         // Load initial data
@@ -153,7 +153,7 @@ async function untrackProduct(ean, shopId) {
 
         // Reload data after deletion
         loadData();
-        showFeedback(`Product with EAN ${ean} has been successfully untracked.`);
+        showPopUpFeedback(`Product with EAN ${ean} has been successfully untracked.`, true);
     } catch (error) {
         console.error('Error deleting product:', error);
         showError('Failed to untrack product. Please try again.');
@@ -368,7 +368,7 @@ function editUrl(ean, shopId, currentUrl) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showFeedback('Product URL updated successfully.');
+                showPopUpFeedback('Product URL updated successfully.' ,true);
                 loadData(); // Reload data to reflect changes
             } else {
                 throw new Error(data.message || 'Failed to update product URL');
@@ -376,7 +376,7 @@ function editUrl(ean, shopId, currentUrl) {
         })
         .catch(error => {
             console.error('Error updating product URL:', error);
-            showError('Failed to update product URL. Please try again.');
+            showPopUpFeedback('Failed to update product URL. Please try again.', false);
         })
 }
 
@@ -502,7 +502,7 @@ function exportTableToExcel(tableID, filename = '') {
 
 //feedback message
 function showPopUpFeedback(message, success = true) {
-    const feedbackDiv = document.getElementById('newProductFeedback');
+    const feedbackDiv = document.getElementById('feedbackMessage');
     feedbackDiv.textContent = message;
     feedbackDiv.style.display = 'block';
     if (success) {
@@ -566,7 +566,7 @@ async function checkEanExistsInDB(ean) {
         }
     } catch (error) {
         console.error('Error checking EAN:', error);
-        document.getElementById('newProductFeedback').textContent = 'Error checking EAN. Please try again.';
+        showPopUpFeedback('Error checking EAN. Please try again.',);
     }
 }
 
@@ -656,7 +656,7 @@ function submitNewProductForm(event) {
                     closeNewProductForm();
                     resetNewProductForm();
                     loadData();
-                }, 2000);
+                }, 500);
             } else {
                 throw new Error(data.message || 'Failed to add product link');
             }

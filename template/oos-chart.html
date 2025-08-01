@@ -5,7 +5,7 @@
         <input type="date" class="date-input" id="startDate" name="startDate" value="">
         <label class="text-muted small" for="endDate">End Date:</label>
         <input type="date" class="date-input" id="endDate" name="endDate" value="">
-        <button class="btn-small " id="loadChartDataBtn">Refresh Chart</button>
+        <!--<button class="btn-small " id="loadChartDataBtn">Refresh Chart</button>-->
     </div>
     <canvas id="myChart"></canvas>
 </div>
@@ -15,20 +15,24 @@
 <script>
 
     const startDateInput = document.getElementById('startDate');
+    startDateInput.value = getDateThreeMonthsAgo(); // Set default to 3 months ago
     const endDateInput = document.getElementById('endDate');
-    const loadChartDataBtn = document.getElementById('loadChartDataBtn');
+    //const loadChartDataBtn = document.getElementById('loadChartDataBtn');
     const ctxElement = document.getElementById('myChart');
     const ctx = ctxElement.getContext('2d');
     let chartInstance = null;
+    let currenrDay = new Date();
 
-    loadChartDataBtn.addEventListener('click', async () => {
-        const startDate = startDateInput.value || null;
-        const endDate = endDateInput.value || null;
-
-        const chartData = await loadChartData(startDate, endDate);
-        if (chartData) {
-            DrawChartData(chartData);
-        }
+    [startDateInput, endDateInput].forEach(input => {
+        input.addEventListener('change', async () => {
+            const startDate = startDateInput.value || null;
+            const endDate = endDateInput.value || null;
+            console.log(`Start Date: ${startDate}, End Date: ${endDate}`);
+            const chartData = await loadChartData(startDate, endDate);
+            if (chartData) {
+                DrawChartData(chartData);
+            }
+        });
     });
 
     async function loadChartData(startDate = null, endDate = null) {
@@ -62,7 +66,7 @@
     }
 
     function DrawChartData(chartData) {
-        console.log('Chart data:', chartData);
+        //console.log('Chart data:', chartData);
 
         // Destroy existing chart if any
         if (chartInstance) {
@@ -77,22 +81,44 @@
                 maintainAspectRatio: false,
                 scales: {
                     y: {
-                        beginAtZero: true
+                        min: 75,
+                        max: 100,
+                        ticks: {
+                            callback: value => value + '%'
+                        }
                     }
                 }
+
             }
         });
+
     }
 
     // Initial chart load
     (async () => {
-        const chartData = await loadChartData();
+        const chartData = await loadChartData(getDateThreeMonthsAgo(), null);
         if (chartData) {
             DrawChartData(chartData);
         }
     })();
 
+    function getDateThreeMonthsAgo() {
+        const today = new Date();
+        const threeMonthsAgo = new Date(today);
 
-    console.log("chart height: "+ctxElement.style.height);
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+        // Handle edge case where day doesn't exist in the target month (e.g. May 31 → Feb 28)
+        if (threeMonthsAgo.getDate() !== today.getDate()) {
+            // Adjust to last day of the previous month if overflowed
+            threeMonthsAgo.setDate(0);
+        }
+
+        const year = threeMonthsAgo.getFullYear();
+        const month = String(threeMonthsAgo.getMonth() + 1).padStart(2, '0');
+        const day = String(threeMonthsAgo.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
+    }
 
 </script>

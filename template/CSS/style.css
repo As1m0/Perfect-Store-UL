@@ -39,6 +39,20 @@ body {
     color: white;
 }
 
+.feedback-message {
+    position: fixed;
+    top: 25px;
+    right: 25px;
+    background: #d4edda;
+    opacity: 0.85;
+    color: #155724;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 25px;
+    border: 1px solid #c3e6cb;
+    z-index: 1001;
+}
+
 .btn-small {
     padding: 4px 8px;
     font-size: 0.7rem;
@@ -114,13 +128,6 @@ body {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     backdrop-filter: blur(10px);
-}
-
-.header {
-    background: #495057;
-    color: white;
-    padding: 15px;
-    text-align: center;
 }
 
 .export-btn{
@@ -256,7 +263,7 @@ display: flex;
 .btn {
     padding: 8px 18px;
     border: none;
-    border-radius: 25px;
+    border-radius: 10px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
@@ -279,6 +286,10 @@ display: flex;
 .btn-secondary {
     background: #6c757d;
     color: white;
+}
+
+.btn-success:hover{
+    transform: translateY(-2px);
 }
 
 .btn-secondary:hover {
@@ -513,14 +524,6 @@ display: flex;
     border: 1px solid #f5c6cb;
 }
 
-.feedback-message {
-    background: #d4edda;
-    color: #155724;
-    padding: 15px;
-    border-radius: 10px;
-    margin: 20px;
-    border: 1px solid #c3e6cb;
-}
 
 .no-data {
     text-align: center;

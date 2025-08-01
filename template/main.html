@@ -1,3 +1,6 @@
+
+
+
 <div class="dark-layer" id="newProductFormLayer" style="display: none">
     <div class="container new-product-container mt-5">
         <h2>Add New Product</h2>
@@ -54,20 +57,13 @@
                 <input type="submit" value="Add Product" class="btn btn-primary mt-3">
                 <button type="button" class="btn btn-secondary mt-3" onclick="closeNewProductForm()">Cancel</button>
             </div>
-            <div id="newProductFeedback" class="feedback-message" style="display: none;"></div>
+           
         </form>
     </div>
 
 </div>
 
-
 <div class="cust-container">
-<!--
-    <div class="header">
-        <h1>OOS Dashboard</h1>
-        <p>Out of Stock Analysis & Monitoring</p>
-    </div>
--->
 
 %!OOSCHART!%
 
@@ -138,16 +134,15 @@
 
 
             <div class="row mx-auto mt-3 w-100">
-                <div class="col-4"><button class="btn btn-success" onclick="openNewProductForm()">+ add
-                        product</button>
+                <div class="col-4"><button class="btn btn-success" onclick="openNewProductForm()">+ add</button>
                 </div>
                 <div class="col-4 text-center">
                     <h2 style="color: gray">Total OOS: <span id="oos-rate-score"></span></h2>
                 </div>
                 <div class="col-4">
                     <div style="float: right">
-                        <button class="btn btn-primary" onclick="loadData()">🔍 Search</button>
-                        <button class="btn btn-secondary" onclick="clearFilters()">🗑️ Clear</button>
+                        <button class="btn btn-primary" onclick="loadData()" style="width: 150px;">Search</button>
+                        <button class="btn btn-secondary" onclick="clearFilters()">Clear</button>
                     </div>
                 </div>
             </div>
@@ -161,7 +156,7 @@
     </div>
 
     <div id="errorMessage" class="error-message" style="display: none;"></div>
-    <div id="feedbackMessage" class="feedback-message" style="display: none;"></div>
+    
 
     <div class="result-count" style="position: relative;">
         <p id="resultCount"></p>
