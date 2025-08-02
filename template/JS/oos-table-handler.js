@@ -8,6 +8,12 @@ let selectedCategories = [];
 let selectedBrands = [];
 let selectedStatuses = [];
 
+let currentPage = 1;
+let totalPages = 1;
+let totalRecords = 0;
+let pageLimit = 50;
+
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function () {
     initializeMultiSelect();
@@ -332,6 +338,7 @@ function displayData(data) {
             <td>${getStatusBadge(row.last_status)}</td>
             <td>${getPercentageBar(row.oos_percentage)}</td>
             <td><strong>${row.days_oos * 7}</strong></td>
+            <td onclick="showProductHistory('${row.ean}', '${document.getElementById('shopDropdown').value}' , event)"><img class="history-icon" src="content/img/history_icon.svg"></td>
             <td>
             <button class="edit-url-btn" onclick="editUrl('${row.ean}', '${document.getElementById('shopDropdown').value}', '${row.product_url}')">EDIT</button>
             <button class="untrack-btn" onclick="untrackProduct('${row.ean}', '${document.getElementById('shopDropdown').value}')">UNTRACK</button>
@@ -368,7 +375,7 @@ function editUrl(ean, shopId, currentUrl) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showPopUpFeedback('Product URL updated successfully.' ,true);
+                showPopUpFeedback('Product URL updated successfully.', true);
                 loadData(); // Reload data to reflect changes
             } else {
                 throw new Error(data.message || 'Failed to update product URL');
@@ -500,20 +507,6 @@ function exportTableToExcel(tableID, filename = '') {
     link.click();
 }
 
-//feedback message
-function showPopUpFeedback(message, success = true) {
-    const feedbackDiv = document.getElementById('feedbackMessage');
-    feedbackDiv.textContent = message;
-    feedbackDiv.style.display = 'block';
-    if (success) {
-        feedbackDiv.style.backgroundColor = '#d4edda'; // Green for success
-    } else {
-        feedbackDiv.style.backgroundColor = '#f8d7da'; // Red for error
-    }
-    setTimeout(() => {
-        feedbackDiv.style.display = 'none';
-    }, 3000);
-}
 
 // Open new product form
 function openNewProductForm() {
@@ -533,6 +526,9 @@ NewEanInput.addEventListener('input', function () {
     const ean = NewEanInput.value.trim();
     if (ean.length >= 8) {
         checkEanExistsInDB(ean);
+    }
+    else {
+        resetNewProductForm();
     }
 });
 
@@ -566,7 +562,7 @@ async function checkEanExistsInDB(ean) {
         }
     } catch (error) {
         console.error('Error checking EAN:', error);
-        showPopUpFeedback('Error checking EAN. Please try again.',);
+        //showPopUpFeedback('Error checking EAN. Please try again.', false);
     }
 }
 
@@ -666,3 +662,83 @@ function submitNewProductForm(event) {
             showPopUpFeedback('Failed to add product link. Please try again.', false);
         })
 }
+
+
+async function loadProductHistory(ean, shopId, startDate = null, endDate = null) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/product-history`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ean: parseInt(ean), shop_id: parseInt(shopId) })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.success && data.data && data.data.length > 0) {
+            return data;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error('Error loading product history:', error);
+        return null;
+    }
+}
+
+function showProductHistory(ean, shopId, event) {
+    document.getElementById("productHistoryModal").style.display = "block";
+    const triggerElement = event.currentTarget; // or event.target if you want the <img>
+    const rect = triggerElement.getBoundingClientRect();
+
+    // Get scroll offsets in case the page is scrolled
+    const top = rect.top + window.scrollY;
+    const left = rect.left + window.scrollX;
+
+    // Show and position the popup
+    const popup = document.getElementById("productHistoryModal");
+    popup.style.position = "absolute";
+    popup.style.top = `${top + rect.height-25}px`; // 8px below the element
+    popup.style.left = `${left-220}px`;
+    popup.style.display = "block";
+    (async () => {
+        const history = await loadProductHistory(ean, shopId, getDateAgo());
+
+        if (!history || !history.data) {
+            console.warn('No product history found.');
+            return;
+        }
+
+        console.log('History for ' + ean + ': ', history.data);
+
+        const historyTable = document.getElementById("popUpHistoryTable");
+
+        // Clear any previous rows
+        historyTable.innerHTML = '';
+
+        const headerRow = document.createElement('tr');
+        headerRow.innerHTML = `
+            <th>Shop</th>
+            <th>Date</th>
+            <th>Avaiable</th>
+        `;
+        historyTable.appendChild(headerRow);
+
+        history.data.forEach(element => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${element.shop_name}</td>
+                <td>${element.date_checked}</td>
+                <td class="history-status-img">${element.is_available ? '<img src="content/img/check.png" alt="YES">' : '<img src="content/img/cross.png" alt="NO">'}</td>
+            `;
+            historyTable.appendChild(row);
+        });
+    })();
+}
+
+
+

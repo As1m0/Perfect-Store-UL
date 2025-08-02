@@ -525,6 +525,8 @@ display: flex;
 }
 
 
+
+
 .no-data {
     text-align: center;
     padding: 60px 20px;
@@ -535,6 +537,42 @@ display: flex;
 .fix-height{
     height: 115px !important;
 }
+
+.history-icon{
+    width: 20px;
+    cursor: pointer;
+}
+
+.history-icon:hover{
+    opacity: 0.8;
+}
+
+
+#productHistoryModal{
+    padding: 25px;
+    border-radius: 5px;
+    background-color: white;
+    opacity: 0.9;
+    z-index: 1002;
+}
+
+#productHistoryModal table{
+    padding: 10px;
+}
+
+#productHistoryModal table th{
+    width: 120px;
+}
+
+#productHistoryModal table tr{
+    height: 30px;
+}
+
+.history-status-img img{
+    width: 20px;
+    margin: auto;
+}
+    
 
 @media (max-width: 768px) {
     .container {
@@ -568,3 +606,4 @@ display: flex;
         padding: 8px 6px;
     }
 }
+

@@ -1,5 +1,9 @@
 
-
+<div id="productHistoryModal" style="display: none;">
+    <h3 class="my-2">Product History</h3>
+    <table id="popUpHistoryTable"></table>
+    <button class="btn btn-secondary mt-3 mx-auto" onclick="document.getElementById('productHistoryModal').style.display='none'">Close</button>
+</div>
 
 <div class="dark-layer" id="newProductFormLayer" style="display: none">
     <div class="container new-product-container mt-5">
@@ -174,8 +178,9 @@
                     <th class="sortable" data-column="ean">EAN</th>
                     <th class="sortable" data-column="name" style="width: 500px;">Product Name</th>
                     <th class="sortable" data-column="last_status">Status</th>
-                    <th class="sortable" data-column="oos_percentage">Availability</th>
+                    <th class="sortable" data-column="oos_percentage" style="width: 100px;">OOS %</th>
                     <th class="sortable" data-column="days_oos">Days OOS</th>
+                    <th class="sortable" data-column="days_oos">History</th>
                     <th class="" data-column="">
                         options
                     </th>
@@ -187,6 +192,8 @@
             <p>📊 No data found. Try adjusting your filters.</p>
         </div>
     </div>
+
+    
 </div>
 
 

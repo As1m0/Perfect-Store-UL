@@ -97,93 +97,6 @@ class OOSService {
         }
     }
 
-    /**
-     * Get summary statistics
-     */
-    public function getSummaryStats($shopId = 3) {
-        try {
-            $query = "
-            SELECT 
-                COUNT(DISTINCT p.ean) as total_products,
-                COUNT(DISTINCT CASE WHEN latest.is_available = 1 THEN p.ean END) as in_stock_products,
-                COUNT(DISTINCT CASE WHEN latest.is_available = 0 THEN p.ean END) as out_of_stock_products,
-                COUNT(DISTINCT CASE WHEN latest.is_available IS NULL THEN p.ean END) as no_data_products,
-                ROUND(AVG(CASE 
-                    WHEN total_checks.total_records = 0 THEN 0
-                    ELSE ((total_checks.total_records - COALESCE(out_of_stock.oos_count, 0)) * 100.0 / total_checks.total_records)
-                END), 2) as avg_availability_percentage
-            FROM products p
-            INNER JOIN urls u ON p.ean = u.ean AND u.shop_id = ?
-            LEFT JOIN (
-                SELECT 
-                    h1.ean,
-                    h1.is_available
-                FROM oos_history h1
-                INNER JOIN (
-                    SELECT ean, MAX(date_checked) as max_date
-                    FROM oos_history
-                    WHERE shop_id = ?
-                    GROUP BY ean
-                ) h2 ON h1.ean = h2.ean AND h1.date_checked = h2.max_date
-                WHERE h1.shop_id = ?
-            ) latest ON p.ean = latest.ean
-            LEFT JOIN (
-                SELECT 
-                    ean,
-                    COUNT(*) as total_records
-                FROM oos_history
-                WHERE shop_id = ?
-                GROUP BY ean
-            ) total_checks ON p.ean = total_checks.ean
-            LEFT JOIN (
-                SELECT 
-                    ean,
-                    COUNT(*) as oos_count
-                FROM oos_history
-                WHERE is_available = 0 AND shop_id = ?
-                GROUP BY ean
-            ) out_of_stock ON p.ean = out_of_stock.ean";
-            
-            $stmt = $this->db->prepare($query);
-            $stmt->execute([$shopId, $shopId, $shopId, $shopId, $shopId]);
-            return $stmt->fetch();
-        } catch (Exception $e) {
-            error_log("Error in getSummaryStats: " . $e->getMessage());
-            throw new Exception("Failed to fetch summary statistics");
-        }
-    }
-
-    public function getProductByEAN($ean): array{
-        try {
-                    $query = "SELECT 
-            b.name AS brand,
-            c.name AS category,
-            sc.name AS subcategory,
-            p.ean,
-            p.name,
-            GROUP_CONCAT(
-                CONCAT(s.name, ': ', u.url) 
-                ORDER BY s.name 
-                SEPARATOR ' | '
-            ) AS urls
-        FROM products p
-        LEFT JOIN brands b ON p.brand_id = b.id
-        LEFT JOIN categories c ON p.category_id = c.id
-        LEFT JOIN subcategories sc ON p.subcategory_id = sc.id
-        LEFT JOIN urls u ON p.ean = u.ean
-        LEFT JOIN shops s ON u.shop_id = s.id
-        WHERE p.ean = {$ean}  -- Only active URLs
-        GROUP BY p.ean, b.name, c.name, sc.name, p.name
-        ORDER BY b.name, c.name, sc.name, p.name;";
-            $stmt = $this->db->prepare($query);
-            $stmt->execute();
-            return $stmt->fetchAll();
-        } catch (Exception $e) {
-            error_log("Error in getShops: " . $e->getMessage());
-            throw new Exception("Failed to fetch product");
-        }
-    }
-
 
 
     public function untrackProduct($ean, $shopId): bool {  
@@ -295,9 +208,9 @@ class OOSService {
             s.id AS shop_id,
             h.date_checked,
             ROUND(
-                (COUNT(CASE WHEN h.is_available = 1 THEN 1 END) * 100.0 / COUNT(*)), 
-                2
-            ) AS availability_percentage
+            (COUNT(CASE WHEN h.is_available = 0 THEN 1 END) * 100.0 / COUNT(*)),
+            2
+        ) AS availability_percentage
         FROM oos_history h
         INNER JOIN shops s ON h.shop_id = s.id
         {$whereClause}
@@ -379,6 +292,61 @@ class OOSService {
             'labels' => $labels,
             'datasets' => $datasets
         ];
+    }
+
+    public function getProductHistory($ean, $shopId, $startDate = null, $endDate = null) {
+        try {
+            $whereConditions = ["h.ean = ?"];
+            $params = [$ean];
+            
+            // Optional shop filter
+            if ($shopId) {
+                $whereConditions[] = "h.shop_id = ?";
+                $params[] = $shopId;
+            }
+            
+            // Optional date range filter
+            if ($startDate && $endDate) {
+                $whereConditions[] = "h.date_checked BETWEEN ? AND ?";
+                $params[] = $startDate;
+                $params[] = $endDate;
+            } elseif ($startDate) {
+                $whereConditions[] = "h.date_checked >= ?";
+                $params[] = $startDate;
+            } elseif ($endDate) {
+                $whereConditions[] = "h.date_checked <= ?";
+                $params[] = $endDate;
+            }
+            
+            $whereClause = implode(' AND ', $whereConditions);
+            
+            $query = "
+            SELECT 
+                h.date_checked,
+                h.is_available,
+                s.name AS shop_name,
+                s.id AS shop_id
+            FROM oos_history h
+            INNER JOIN shops s ON h.shop_id = s.id
+            WHERE {$whereClause}
+            ORDER BY h.date_checked ASC, s.name ASC";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->execute($params);
+            $results = $stmt->fetchAll();
+            
+            // Convert data types
+            foreach ($results as &$row) {
+                $row['is_available'] = (int) $row['is_available'];
+                $row['shop_id'] = (int) $row['shop_id'];
+            }
+
+            return $results;
+            
+        } catch (Exception $e) {
+            error_log("Error in getProductHistory: " . $e->getMessage());
+            throw new Exception("Failed to fetch product history");
+        }
     }
 
     

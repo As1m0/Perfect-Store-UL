@@ -43,14 +43,7 @@ try {
                     $data = $oosService->getShops();
                     echo ApiResponse::success($data, 'Shops retrieved successfully');
                     break;
-                    
-                case 'summary':
-                    $shopId = $_GET['shop_id'] ?? 3;
-                    $data = $oosService->getSummaryStats((int)$shopId);
-                    echo ApiResponse::success($data, 'Summary statistics retrieved successfully');
-                    break;
 
-                    
                 default:
                     echo ApiResponse::error('Endpoint not found', 404);
                     break;
@@ -193,6 +186,28 @@ try {
                         $endDate = $input['end_date'] ?? null;
                         $data = $oosService->getOOSChartData($startDate, $endDate);
                         echo ApiResponse::success($data, 'Chart data retrieved successfully');
+                        break;
+
+                        case 'product-history':
+                        $input = json_decode(file_get_contents('php://input'), true);
+                        if (json_last_error() !== JSON_ERROR_NONE){
+                            echo ApiResponse::error('Invalid JSON in request body', 400);
+                        break;
+                         }
+                         $startDate = $input['start_date'] ?? null;
+                         $endDate = $input['end_date'] ?? null;
+                         $shop_id = $input['shop_id'] ?? null;
+                         $ean = $input['ean'] ?? null;
+                         if ($ean && $shop_id) {
+                            $result = $oosService->getProductHistory($ean, $shop_id, $startDate, $endDate);
+                            if ($result) {
+                                echo ApiResponse::success($result, 'Product history requested successfuly');
+                            } else {
+                                echo ApiResponse::error('Failed to load product history', 500);
+                            }
+                        } else {
+                            echo ApiResponse::error('EAN, ShopId  parameters required', 400);
+                        }
                         break;
 
                 default:

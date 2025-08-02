@@ -23,69 +23,69 @@ class QueryGenerator {
 
         // Base query
         $query = "
-SELECT 
-    c.name AS category,
-    sc.name AS subcategory,
-    b.name AS brand,
-    p.ean,
-    p.name,
-    u.url AS product_url,
-    COALESCE(latest.is_available, -1) AS last_status,
-    CASE 
-        WHEN total_checks.total_records = 0 THEN 0
-        ELSE ROUND(((total_checks.total_records - COALESCE(out_of_stock.oos_count, 0)) * 100.0 / total_checks.total_records), 2)
-    END AS oos_percentage,
-    COALESCE(oos_days.days_oos, 0) AS days_oos
-FROM products p
-INNER JOIN urls u ON p.ean = u.ean AND u.shop_id = {$shopId}
-LEFT JOIN categories c ON p.category_id = c.id
-LEFT JOIN subcategories sc ON p.subcategory_id = sc.id
-LEFT JOIN brands b ON p.brand_id = b.id
+                SELECT 
+                    c.name AS category,
+                    sc.name AS subcategory,
+                    b.name AS brand,
+                    p.ean,
+                    p.name,
+                    u.url AS product_url,
+                    COALESCE(latest.is_available, -1) AS last_status,
+                    CASE 
+    WHEN total_checks.total_records = 0 THEN 0
+    ELSE ROUND((COALESCE(out_of_stock.oos_count, 0) * 100.0 / total_checks.total_records), 2)
+END AS oos_percentage,
+                    COALESCE(oos_days.days_oos, 0) AS days_oos
+                FROM products p
+                INNER JOIN urls u ON p.ean = u.ean AND u.shop_id = {$shopId}
+                LEFT JOIN categories c ON p.category_id = c.id
+                LEFT JOIN subcategories sc ON p.subcategory_id = sc.id
+                LEFT JOIN brands b ON p.brand_id = b.id
 
--- Get the latest status for each product
-LEFT JOIN (
-    SELECT 
-        h1.ean,
-        h1.is_available
-    FROM oos_history h1
-    INNER JOIN (
-        SELECT ean, MAX(date_checked) as max_date
-        FROM oos_history
-        WHERE shop_id = {$shopId}
-        GROUP BY ean
-    ) h2 ON h1.ean = h2.ean AND h1.date_checked = h2.max_date
-    WHERE h1.shop_id = {$shopId}
-) latest ON p.ean = latest.ean
+                -- Get the latest status for each product
+                LEFT JOIN (
+                    SELECT 
+                        h1.ean,
+                        h1.is_available
+                    FROM oos_history h1
+                    INNER JOIN (
+                        SELECT ean, MAX(date_checked) as max_date
+                        FROM oos_history
+                        WHERE shop_id = {$shopId}
+                        GROUP BY ean
+                    ) h2 ON h1.ean = h2.ean AND h1.date_checked = h2.max_date
+                    WHERE h1.shop_id = {$shopId}
+                ) latest ON p.ean = latest.ean
 
--- Count total history records per product
-LEFT JOIN (
-    SELECT 
-        ean,
-        COUNT(*) as total_records
-    FROM oos_history
-    WHERE shop_id = {$shopId}
-    GROUP BY ean
-) total_checks ON p.ean = total_checks.ean
+                -- Count total history records per product
+                LEFT JOIN (
+                    SELECT 
+                        ean,
+                        COUNT(*) as total_records
+                    FROM oos_history
+                    WHERE shop_id = {$shopId}
+                    GROUP BY ean
+                ) total_checks ON p.ean = total_checks.ean
 
--- Count out-of-stock records per product
-LEFT JOIN (
-    SELECT 
-        ean,
-        COUNT(*) as oos_count
-    FROM oos_history
-    WHERE is_available = 0 AND shop_id = {$shopId}
-    GROUP BY ean
-) out_of_stock ON p.ean = out_of_stock.ean
+                -- Count out-of-stock records per product
+                LEFT JOIN (
+                    SELECT 
+                        ean,
+                        COUNT(*) as oos_count
+                    FROM oos_history
+                    WHERE is_available = 0 AND shop_id = {$shopId}
+                    GROUP BY ean
+                ) out_of_stock ON p.ean = out_of_stock.ean
 
--- Calculate days out of stock
-LEFT JOIN (
-    SELECT 
-        ean,
-        COUNT(DISTINCT date_checked) as days_oos
-    FROM oos_history
-    WHERE is_available = 0 AND shop_id = {$shopId}
-    GROUP BY ean
-) oos_days ON p.ean = oos_days.ean";
+                -- Calculate days out of stock
+                LEFT JOIN (
+                    SELECT 
+                        ean,
+                        COUNT(DISTINCT date_checked) as days_oos
+                    FROM oos_history
+                    WHERE is_available = 0 AND shop_id = {$shopId}
+                    GROUP BY ean
+                ) oos_days ON p.ean = oos_days.ean";
 
         // Add WHERE clause for filters
         $whereConditions = [];

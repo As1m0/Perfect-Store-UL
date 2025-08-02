@@ -5,7 +5,6 @@
         <input type="date" class="date-input" id="startDate" name="startDate" value="">
         <label class="text-muted small" for="endDate">End Date:</label>
         <input type="date" class="date-input" id="endDate" name="endDate" value="">
-        <!--<button class="btn-small " id="loadChartDataBtn">Refresh Chart</button>-->
     </div>
     <canvas id="myChart"></canvas>
 </div>
@@ -15,9 +14,9 @@
 <script>
 
     const startDateInput = document.getElementById('startDate');
-    startDateInput.value = getDateThreeMonthsAgo(); // Set default to 3 months ago
+    startDateInput.value = getDateAgo(2); // Set how many moth back want to load data
+
     const endDateInput = document.getElementById('endDate');
-    //const loadChartDataBtn = document.getElementById('loadChartDataBtn');
     const ctxElement = document.getElementById('myChart');
     const ctx = ctxElement.getContext('2d');
     let chartInstance = null;
@@ -66,9 +65,7 @@
     }
 
     function DrawChartData(chartData) {
-        //console.log('Chart data:', chartData);
-
-        // Destroy existing chart if any
+        
         if (chartInstance) {
             chartInstance.destroy();
         }
@@ -81,8 +78,8 @@
                 maintainAspectRatio: false,
                 scales: {
                     y: {
-                        min: 75,
-                        max: 100,
+                        min: 0,
+                        max: setMaxYValue(getMaxYValue()), //TODO set max value dynamically
                         ticks: {
                             callback: value => value + '%'
                         }
@@ -94,19 +91,33 @@
 
     }
 
+    function setMaxYValue(maxValue) {
+        if (chartInstance) {
+            chartInstance.options.scales.y.max = maxValue;
+            chartInstance.update();
+        }
+    }
+
+    function getMaxYValue() {
+        if (chartInstance) {
+            return chartInstance.options.scales.y.max;
+        }
+        return 15; // Default value if chart is not initialized
+    }
+
     // Initial chart load
     (async () => {
-        const chartData = await loadChartData(getDateThreeMonthsAgo(), null);
+        const chartData = await loadChartData(startDateInput.value, null);
         if (chartData) {
             DrawChartData(chartData);
         }
     })();
 
-    function getDateThreeMonthsAgo() {
+    function getDateAgo(monthBack = 3) {
         const today = new Date();
         const threeMonthsAgo = new Date(today);
 
-        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - monthBack);
 
         // Handle edge case where day doesn't exist in the target month (e.g. May 31 → Feb 28)
         if (threeMonthsAgo.getDate() !== today.getDate()) {
