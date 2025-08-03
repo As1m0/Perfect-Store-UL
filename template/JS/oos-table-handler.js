@@ -8,17 +8,13 @@ let selectedCategories = [];
 let selectedBrands = [];
 let selectedStatuses = [];
 
-let currentPage = 1;
-let totalPages = 1;
-let totalRecords = 0;
-let pageLimit = 50;
-
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function () {
     initializeMultiSelect();
     loadInitialData();
     setupEventListeners();
+    document.getElementById('startDateTable').value = getDateAgo();
 });
 
 // Initialize multi-select dropdowns
@@ -244,7 +240,6 @@ function getStatusText(value) {
 async function loadData() {
     showLoading();
     hideError();
-
     try {
         const requestData = {
             shopId: parseInt(document.getElementById('shopDropdown').value),
@@ -266,6 +261,17 @@ async function loadData() {
             requestData.filters.last_status = selectedStatuses.map(s => parseInt(s));
         }
 
+        // Add date filters
+        const startDateInput = document.getElementById('startDateTable');
+        const endDateInput = document.getElementById('endDateTable');
+        
+        if (startDateInput && startDateInput.value) {
+            requestData.filters.start_time = startDateInput.value;
+        }
+        if (endDateInput && endDateInput.value) {
+            requestData.filters.end_time = endDateInput.value;
+        }
+
         const response = await fetch(`${API_BASE_URL}/oos-data`, {
             method: 'POST',
             headers: {
@@ -279,17 +285,14 @@ async function loadData() {
         }
 
         const responseData = await response.json();
-
         if (!responseData.success) {
             throw new Error(responseData.message || 'API returned error');
         }
 
         currentData = responseData.data;
-
         //console.log(currentData.length + ' records loaded');
         displayData(responseData.data);
         updateSortHeaders();
-
     } catch (error) {
         console.error('Error loading data:', error);
         showError('Failed to load data. Please check your connection and try again.');
@@ -434,6 +437,7 @@ function updateSortHeaders() {
     }
 }
 
+
 // Clear all filters
 function clearFilters() {
     selectedCategories = [];
@@ -444,6 +448,10 @@ function clearFilters() {
     document.querySelectorAll('.multi-select-option.selected').forEach(option => {
         option.classList.remove('selected');
     });
+
+    //  clear date filters
+    document.getElementById('startDateTable').value = getDateAgo();
+    document.getElementById('endDateTable').value = '';
 
     // Clear tags
     document.querySelectorAll('.selected-tags').forEach(container => {
@@ -704,7 +712,7 @@ function showProductHistory(ean, shopId, event) {
     popup.style.left = `${left - 220}px`;
     popup.style.display = "block";
     (async () => {
-        const history = await loadProductHistory(ean, shopId, getDateAgo(2));
+        const history = await loadProductHistory(ean, shopId, getDateAgo(3));
 
         if (!history || !history.data) {
             console.warn('No product history found.');

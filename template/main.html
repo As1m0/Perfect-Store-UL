@@ -1,4 +1,3 @@
-
 <div id="productHistoryModal" style="display: none;">
     <span class="x-close-btn" onclick="document.getElementById('productHistoryModal').style.display='none'">X</span>
     <h4 class="my-2">Product History</h4>
@@ -45,7 +44,7 @@
                 <div class="row">
                     <div class="col-2">
                         <label for="newshopSelect">Shop</label>
-                        <select class="form-control" id="newshopSelect" required>  
+                        <select class="form-control" id="newshopSelect" required>
                             <option value="">Select Shop</option>
                             <!-- Options will be populated dynamically -->
                         </select>
@@ -61,7 +60,7 @@
                 <input type="submit" value="Add Product" class="btn btn-primary mt-3">
                 <button type="button" class="btn btn-secondary mt-3" onclick="closeNewProductForm()">Cancel</button>
             </div>
-           
+
         </form>
     </div>
 
@@ -69,13 +68,15 @@
 
 <div class="cust-container">
 
-%!OOSCHART!%
+    %!OOSCHART!%
 
     <div class="filters">
         <div class="filter-grid">
+            <!-- Add this to your filter section -->
+
             <div class="filter-group fix-height">
                 <label for="shopDropdown">Shop</label>
-                <select id="shopDropdown" class="form-control w-100">
+                <select id="shopDropdown" class="form-control w-100" onchange="loadData()">
                     <!-- Options will be populated dynamically -->
                 </select>
             </div>
@@ -101,7 +102,7 @@
             <div class="filter-group fix-height">
                 <label>Status</label>
                 <div class="multi-select" id="statusSelect">
-                    <input type="text" placeholder="Select status..." readonly>
+                    <input type="text" placeholder="Select status..." readonly onchange="loadData()">
                     <div class="multi-select-dropdown" id="statusDropdown">
                         <div class="multi-select-option" data-value="1">In Stock</div>
                         <div class="multi-select-option" data-value="0">Out of Stock</div>
@@ -113,7 +114,14 @@
 
             <div class="filter-group fix-height">
                 <label>Search by name</label>
-                <input type="text" id="searchName" placeholder="Search by product name..." style="min-width: 400px;">
+                <input type="text" id="searchName" placeholder="Search by product name..." style="min-width: 400px;" >
+            </div>
+
+            <div class="text-center mb-3">
+                <label class="text-muted small" for="startDateTable">Start Date:</label>
+                <input type="date" class="date-input" id="startDateTable" name="startDate" value="" onchange="loadData()">
+                <label class="text-muted small" for="endDateTable">End Date:</label>
+                <input type="date" class="date-input" id="endDateTable" name="endDate" value="" onchange="loadData()">
             </div>
         </div>
 
@@ -159,12 +167,12 @@
     </div>
 
     <div id="errorMessage" class="error-message" style="display: none;"></div>
-    
+
 
     <div class="result-count" style="position: relative;">
         <p id="resultCount"></p>
-        <img src="content/img/excel-icon.png" onclick="exportTableToExcel('dataTable', 'OOS_product_scores')" id="excel-icon"
-            alt="excel">
+        <img src="content/img/excel-icon.png" onclick="exportTableToExcel('dataTable', 'OOS_product_scores')"
+            id="excel-icon" alt="excel">
     </div>
 
     <div class="table-container">
@@ -192,7 +200,7 @@
         </div>
     </div>
 
-    
+
 </div>
 
 
