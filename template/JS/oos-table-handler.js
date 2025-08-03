@@ -96,13 +96,11 @@ async function loadInitialData() {
                 shops.forEach(item => {
                     const option = document.createElement('option');
                     option.value = item.id; // Assuming each item has an 'id' field
-                    if (item.id === 3) {
-                        option.selected = true; // Select Kifli by default
-                    }
                     option.textContent = item.name ? item.name.toUpperCase() : '';
                     dropdown.appendChild(option);
                 });
             }
+            document.getElementById('shopDropdown').selectedIndex = 2;
         }
 
         if (categoriesResponse.ok) {
@@ -702,18 +700,19 @@ function showProductHistory(ean, shopId, event) {
     // Show and position the popup
     const popup = document.getElementById("productHistoryModal");
     popup.style.position = "absolute";
-    popup.style.top = `${top + rect.height-25}px`; // 8px below the element
-    popup.style.left = `${left-220}px`;
+    popup.style.top = `${top + rect.height - 25}px`; // 8px below the element
+    popup.style.left = `${left - 220}px`;
     popup.style.display = "block";
     (async () => {
-        const history = await loadProductHistory(ean, shopId, getDateAgo());
+        const history = await loadProductHistory(ean, shopId, getDateAgo(2));
 
         if (!history || !history.data) {
             console.warn('No product history found.');
             return;
         }
 
-        console.log('History for ' + ean + ': ', history.data);
+
+        //console.log('History for ' + ean + ': ', history.data);
 
         const historyTable = document.getElementById("popUpHistoryTable");
 
@@ -724,21 +723,45 @@ function showProductHistory(ean, shopId, event) {
         headerRow.innerHTML = `
             <th>Shop</th>
             <th>Date</th>
-            <th>Avaiable</th>
+            <th>Stock status</th>
         `;
         historyTable.appendChild(headerRow);
 
-        history.data.forEach(element => {
+        history.data.reverse().forEach(element => {
+            let imgElement = "<img src=''>";
+            if(element.is_available == 1)
+            {
+                imgElement = '<img src="content/img/check.png">'
+            }
+            else if (element.is_available == 0) {
+                imgElement = '<img src="content/img/cross.png">'
+            }
+            else {
+                imgElement = '<img src="content/img/empty_cross.png">'
+            }
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${element.shop_name}</td>
                 <td>${element.date_checked}</td>
-                <td class="history-status-img">${element.is_available ? '<img src="content/img/check.png" alt="YES">' : '<img src="content/img/cross.png" alt="NO">'}</td>
+                <td class="history-status-img">${imgElement}</td>
             `;
             historyTable.appendChild(row);
         });
     })();
 }
+
+//hide pop-up if clicking outside
+document.addEventListener('click', function (event) {
+    const popup = document.getElementById('productHistoryModal');
+
+    if (popup.style.display === 'none') return;
+
+    if (popup.contains(event.target)) return;
+
+    if (event.target.classList.contains('history-icon')) return;
+
+    popup.style.display = 'none';
+});
 
 
 

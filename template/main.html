@@ -1,8 +1,8 @@
 
 <div id="productHistoryModal" style="display: none;">
-    <h3 class="my-2">Product History</h3>
+    <span class="x-close-btn" onclick="document.getElementById('productHistoryModal').style.display='none'">X</span>
+    <h4 class="my-2">Product History</h4>
     <table id="popUpHistoryTable"></table>
-    <button class="btn btn-secondary mt-3 mx-auto" onclick="document.getElementById('productHistoryModal').style.display='none'">Close</button>
 </div>
 
 <div class="dark-layer" id="newProductFormLayer" style="display: none">
@@ -76,7 +76,6 @@
             <div class="filter-group fix-height">
                 <label for="shopDropdown">Shop</label>
                 <select id="shopDropdown" class="form-control w-100">
-                    <option value="">KIFLI</option>
                     <!-- Options will be populated dynamically -->
                 </select>
             </div>
@@ -164,7 +163,7 @@
 
     <div class="result-count" style="position: relative;">
         <p id="resultCount"></p>
-        <img src="content/img/excel-icon.png" onclick="exportTableToExcel('dataTable', 'data')" id="excel-icon"
+        <img src="content/img/excel-icon.png" onclick="exportTableToExcel('dataTable', 'OOS_product_scores')" id="excel-icon"
             alt="excel">
     </div>
 
@@ -177,7 +176,7 @@
                     <th class="sortable" data-column="brand">Brand</th>
                     <th class="sortable" data-column="ean">EAN</th>
                     <th class="sortable" data-column="name" style="width: 500px;">Product Name</th>
-                    <th class="sortable" data-column="last_status">Status</th>
+                    <th class="sortable" data-column="last_status">Last Status</th>
                     <th class="sortable" data-column="oos_percentage" style="width: 100px;">OOS %</th>
                     <th class="sortable" data-column="days_oos">Days OOS</th>
                     <th class="sortable" data-column="days_oos">History</th>

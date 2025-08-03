@@ -187,45 +187,45 @@ class OOSService {
     }
 
     public function getOOSChartData($startDate = null, $endDate = null) {
-    try {
-        $whereClause = "";
-        $params = [];
-        
-        if ($startDate && $endDate) {
-            $whereClause = "WHERE h.date_checked BETWEEN ? AND ?";
-            $params = [$startDate, $endDate];
-        } elseif ($startDate) {
-            $whereClause = "WHERE h.date_checked >= ?";
-            $params = [$startDate];
-        } elseif ($endDate) {
-            $whereClause = "WHERE h.date_checked <= ?";
-            $params = [$endDate];
-        }
-        
-        $query = "
-        SELECT 
-            s.name AS shop_name,
-            s.id AS shop_id,
-            h.date_checked,
-            ROUND(
-            (COUNT(CASE WHEN h.is_available = 0 THEN 1 END) * 100.0 / COUNT(*)),
-            2
-        ) AS availability_percentage
-        FROM oos_history h
-        INNER JOIN shops s ON h.shop_id = s.id
-        {$whereClause}
-        GROUP BY s.id, s.name, h.date_checked
-        ORDER BY h.date_checked ASC, s.name ASC";
-        
-        $stmt = $this->db->prepare($query);
-        $stmt->execute($params);
-        $results = $stmt->fetchAll();
-        
-        // Transform data for chart format
-        $chartData = $this->transformToChartData($results);
-        
-        return $chartData;
-        
+        try {
+            $whereClause = "";
+            $params = [];
+            
+            if ($startDate && $endDate) {
+                $whereClause = "WHERE h.date_checked BETWEEN ? AND ?";
+                $params = [$startDate, $endDate];
+            } elseif ($startDate) {
+                $whereClause = "WHERE h.date_checked >= ?";
+                $params = [$startDate];
+            } elseif ($endDate) {
+                $whereClause = "WHERE h.date_checked <= ?";
+                $params = [$endDate];
+            }
+            
+            $query = "
+            SELECT 
+                s.name AS shop_name,
+                s.id AS shop_id,
+                h.date_checked,
+                ROUND(
+                (COUNT(CASE WHEN h.is_available = 0 THEN 1 END) * 100.0 / COUNT(*)),
+                2
+            ) AS availability_percentage
+            FROM oos_history h
+            INNER JOIN shops s ON h.shop_id = s.id
+            {$whereClause}
+            GROUP BY s.id, s.name, h.date_checked
+            ORDER BY h.date_checked ASC, s.name ASC";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->execute($params);
+            $results = $stmt->fetchAll();
+            
+            // Transform data for chart format
+            $chartData = $this->transformToChartData($results);
+            
+            return $chartData;
+            
         } catch (Exception $e) {
             error_log("Error in getOOSChartData: " . $e->getMessage());
             throw new Exception("Failed to fetch OOS chart data");
