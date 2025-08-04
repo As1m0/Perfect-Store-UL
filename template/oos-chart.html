@@ -5,6 +5,7 @@
         <input type="date" class="date-input" id="startDate" name="startDate" value="">
         <label class="text-muted small" for="endDate">End Date:</label>
         <input type="date" class="date-input" id="endDate" name="endDate" value="">
+        <button class="btn btn-secondary" onclick="clearChartDateFilters()" style="font-size: 10px; padding: 3px; border-radius: 5px;">clear</button>
     </div>
     <canvas id="myChart"></canvas>
 </div>
@@ -15,24 +16,30 @@
 
     const startDateInput = document.getElementById('startDate');
     startDateInput.value = getDateAgo(); // Set how many moth back want to load data
-
     const endDateInput = document.getElementById('endDate');
-    const ctxElement = document.getElementById('myChart');
-    const ctx = ctxElement.getContext('2d');
     let chartInstance = null;
-    let currenrDay = new Date();
 
     [startDateInput, endDateInput].forEach(input => {
         input.addEventListener('change', async () => {
             const startDate = startDateInput.value || null;
             const endDate = endDateInput.value || null;
-            console.log(`Start Date: ${startDate}, End Date: ${endDate}`);
+            //console.log(`Start Date: ${startDate}, End Date: ${endDate}`);
             const chartData = await loadChartData(startDate, endDate);
             if (chartData) {
                 DrawChartData(chartData);
             }
         });
     });
+
+    async function clearChartDateFilters() {
+        startDateInput.value = getDateAgo();
+        endDateInput.value = '';
+        const chartData = await loadChartData(startDate, endDate);
+            if (chartData) {
+                DrawChartData(chartData);
+            }
+        
+    }
 
     async function loadChartData(startDate = null, endDate = null) {
         try {
@@ -64,31 +71,43 @@
         }
     }
 
+    function calculateMaxYFromData(data) {
+        const values = data.datasets.flatMap(ds => ds.data);
+        const max = Math.max(...values);
+        return Math.ceil(max / 5) * 5; // Round up to nearest 5%
+    }
+
     function DrawChartData(chartData) {
-        
         if (chartInstance) {
             chartInstance.destroy();
         }
 
-        chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: chartData.data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        min: 0,
-                        max: setMaxYValue(getMaxYValue()), //TODO set max value dynamically
-                        ticks: {
-                            callback: value => value + '%'
+        const ctxElement = document.getElementById('myChart');
+        const ctx = ctxElement.getContext('2d');
+        const maxY = calculateMaxYFromData(chartData.data);
+
+        try {
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: chartData.data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: maxY, // dynamically set max
+                            ticks: {
+                                callback: value => value + '%'
+                            }
                         }
                     }
                 }
-
-            }
-        });
-
+            });
+        }
+        catch (e) {
+            console.error('Failed to initialize chart:', e);
+        }
     }
 
     function setMaxYValue(maxValue) {
