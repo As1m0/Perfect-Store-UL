@@ -83,7 +83,7 @@ class QueryGenerator {
                         ean,
                         COUNT(*) as oos_count
                     FROM oos_history
-                    WHERE is_available = 0 AND shop_id = {$shopId} {$dateFilter}
+                    WHERE is_available = 0 OR is_available = -1 AND shop_id = {$shopId} {$dateFilter}
                     GROUP BY ean
                 ) out_of_stock ON p.ean = out_of_stock.ean
 

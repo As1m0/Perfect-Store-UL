@@ -6,10 +6,10 @@
         "class" : "IndexPage"
     },
     {
-        "page" : "aloldal",
-        "template" : "aloldal.html",
+        "page" : "search-score",
+        "template" : "search-score.html",
         "fullTemplate" : false,
-        "class" : "AloldalPage"
+        "class" : "SearchScorePage"
     },
     {
         "page" : "login",

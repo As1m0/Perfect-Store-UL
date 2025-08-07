@@ -10,6 +10,23 @@ require_once '../config.php';
 // Set headers
 ApiResponse::sendHeaders();
 
+function sanitizeInput($input) {
+    $sanitized = [];
+    foreach ($input as $key => $value) {
+        if (is_array($value)) {
+            $sanitized[$key] = sanitizeInput($value);
+        } else {
+            // Choose filter based on key or value type
+            if (is_numeric($value)) {
+                $sanitized[$key] = filter_var($value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+            } else {
+                $sanitized[$key] = filter_var($value, FILTER_SANITIZE_STRING);
+            }
+        }
+    }
+    return $sanitized;
+}
+
 try {
     global $cfg;
     $oosService = new OOSService($cfg);
@@ -59,6 +76,7 @@ try {
                         echo ApiResponse::error('Invalid JSON in request body', 400);
                         break;
                     }
+                    $input = sanitizeInput($input);
                     
                     // Validate required fields
                     $options = [
@@ -78,6 +96,7 @@ try {
                         echo ApiResponse::error('Invalid JSON in request body', 400);
                         break;
                     }
+                    $input = sanitizeInput($input);
                     $ean = $input['EAN'] ?? '';
                     $shopId = $input['shopId'] ?? '';
                     if ($ean && $shopId) {
@@ -98,6 +117,7 @@ try {
                     echo ApiResponse::error('Invalid JSON in request body', 400);
                     break;
                 }
+                $input = sanitizeInput($input);
                 $ean = $input['EAN'] ?? '';
                 $shopId = $input['shopId'] ?? '';
                 $productUrl = $input['product_url'] ?? '';
@@ -119,6 +139,7 @@ try {
                     echo ApiResponse::error('Invalid JSON in request body', 400);
                     break;
                 }
+                $input = sanitizeInput($input);
                 $ean = $input['EAN'] ?? '';
                 if ($ean) {
                     $data = $oosService->getProductByEANwithIds($ean);
@@ -138,6 +159,7 @@ try {
                     echo ApiResponse::error('Invalid JSON in request body', 400);
                     break;
                 }
+                $input = sanitizeInput($input);
                 $ean = $input['EAN'] ?? '';
                 $name = $input['name'] ?? '';
                 $brandId = $input['brand_id'] ?? '';
@@ -161,6 +183,7 @@ try {
                     echo ApiResponse::error('Invalid JSON in request body', 400);
                     break;
                 }
+                $input = sanitizeInput($input);
                 $ean = $input['EAN'] ?? '';
                 $shopId = $input['shopId'] ?? '';
                 $productUrl = $input['product_url'] ?? '';
@@ -182,9 +205,11 @@ try {
                         echo ApiResponse::error('Invalid JSON in request body', 400);
                         break;
                     }
+                    $input = sanitizeInput($input);
                     $startDate = $input['start_date'] ?? null;
                     $endDate = $input['end_date'] ?? null;
-                    $data = $oosService->getOOSChartData($startDate, $endDate);
+                    $groupBy = $input['groupBy'] ?? null;
+                    $data = $oosService->getOOSChartData($startDate, $endDate, $groupBy);
                     echo ApiResponse::success($data, 'Chart data retrieved successfully');
                     break;
 
@@ -194,6 +219,7 @@ try {
                     echo ApiResponse::error('Invalid JSON in request body', 400);
                 break;
                     }
+                    $input = sanitizeInput($input);
                     $startDate = $input['start_date'] ?? null;
                     $endDate = $input['end_date'] ?? null;
                     $shop_id = $input['shop_id'] ?? null;

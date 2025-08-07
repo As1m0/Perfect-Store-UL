@@ -26,7 +26,7 @@ $cfg["defaultFooterFlag"] = "FOOTER";
 $cfg["db"]["hostname"] = "localhost";
 $cfg["db"]["username"] = "website";
 $cfg["db"]["pass"] = "gehNuf-nakjiz-wamna3";
-$cfg["db"]["db"] = "OOS";
+$cfg["db"]["db"] = "OOS2";
 $cfg["db"]["port"] = "3306";
 
 //API

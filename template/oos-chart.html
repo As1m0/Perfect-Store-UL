@@ -1,11 +1,19 @@
 <div class="chart-container">
-    <h4 class="text-center mt-3">Out of Stock riport</h4>
+    <h4 class="text-center mt-3">Out of Stock report</h4>
     <div class="text-center mb-3">
+        <label class="text-muted small" for="periodSelect">Period:</label>
+        <select class="mr-1" type="select" id="periodSelect" name="periodSelect">
+            <option value="daily">Daily</option>
+            <option value="weekly" selected>Weekly</option>
+            <option value="monthly">Montly</option>
+            <option value="yearly">Yearly</option>
+        </select>
         <label class="text-muted small" for="startDate">Start Date:</label>
         <input type="date" class="date-input" id="startDate" name="startDate" value="">
         <label class="text-muted small" for="endDate">End Date:</label>
         <input type="date" class="date-input" id="endDate" name="endDate" value="">
-        <button class="btn btn-secondary" onclick="clearChartDateFilters()" style="font-size: 10px; padding: 3px; border-radius: 5px;">clear</button>
+        <button class="btn btn-secondary" onclick="clearChartDateFilters()"
+            style="font-size: 10px; padding: 3px; border-radius: 5px;">clear</button>
     </div>
     <canvas id="myChart"></canvas>
 </div>
@@ -15,16 +23,18 @@
 <script>
 
     const startDateInput = document.getElementById('startDate');
+    const groupByElement = document.getElementById('periodSelect');
     startDateInput.value = getDateAgo(); // Set how many moth back want to load data
     const endDateInput = document.getElementById('endDate');
     let chartInstance = null;
 
-    [startDateInput, endDateInput].forEach(input => {
+    [startDateInput, endDateInput, groupByElement].forEach(input => {
         input.addEventListener('change', async () => {
             const startDate = startDateInput.value || null;
             const endDate = endDateInput.value || null;
+            const groupBy = groupByElement.value || null;
             //console.log(`Start Date: ${startDate}, End Date: ${endDate}`);
-            const chartData = await loadChartData(startDate, endDate);
+            const chartData = await loadChartData(startDate, endDate, groupBy);
             if (chartData) {
                 DrawChartData(chartData);
             }
@@ -34,14 +44,32 @@
     async function clearChartDateFilters() {
         startDateInput.value = getDateAgo();
         endDateInput.value = '';
-        const chartData = await loadChartData(startDate, endDate);
-            if (chartData) {
-                DrawChartData(chartData);
-            }
-        
+        //groupByElement.value = 'weekly';
+        groupByElement.selectedIndex = 1;
+        const chartData = await loadChartData(startDate, endDate, groupByElement.value);
+        if (chartData) {
+            DrawChartData(chartData);
+        }
     }
 
-    async function loadChartData(startDate = null, endDate = null) {
+    //modify startdate / anddate on periodt select
+    groupByElement.addEventListener("change", () => {
+        switch (groupByElement.value) {
+            case "daily":
+                startDateInput.value = getDateAgo(1);
+                break;
+            case "monthly":
+                startDateInput.value = getDateAgo(12);
+                break;
+            case "yearly":
+                startDateInput.value = getDateAgo(36);
+                break;
+            default:
+                startDateInput.value = getDateAgo(3);
+        }
+    });
+
+    async function loadChartData(startDate = null, endDate = null, groupBy = null) {
         try {
             const response = await fetch(`${API_BASE_URL}/chart-data`, {
                 method: 'POST',
@@ -50,7 +78,8 @@
                 },
                 body: JSON.stringify({
                     start_date: startDate,
-                    end_date: endDate
+                    end_date: endDate,
+                    groupBy: groupBy
                 })
             });
 
@@ -126,12 +155,13 @@
 
     // Initial chart load
     (async () => {
-        const chartData = await loadChartData(startDateInput.value, null);
+        const chartData = await loadChartData(startDateInput.value, endDateInput.value, groupByElement.value);
         if (chartData) {
             DrawChartData(chartData);
         }
     })();
 
+    //get a date ago for determine start-date filter
     function getDateAgo(monthBack = 3) {
         const today = new Date();
         const threeMonthsAgo = new Date(today);

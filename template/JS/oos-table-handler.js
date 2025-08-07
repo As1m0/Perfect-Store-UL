@@ -677,7 +677,7 @@ async function loadProductHistory(ean, shopId, startDate = null, endDate = null)
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ ean: parseInt(ean), shop_id: parseInt(shopId) })
+            body: JSON.stringify({ ean: parseInt(ean), shop_id: parseInt(shopId), start_date: startDate ? startDate : null, end_date: endDate ? endDate : null  })
         });
 
         if (!response.ok) {
@@ -712,7 +712,7 @@ function showProductHistory(ean, shopId, event) {
     popup.style.left = `${left - 220}px`;
     popup.style.display = "block";
     (async () => {
-        const history = await loadProductHistory(ean, shopId, getDateAgo(3));
+        const history = await loadProductHistory(ean, shopId, document.getElementById('startDateTable').value, document.getElementById('endDateTable').value);
 
         if (!history || !history.data) {
             console.warn('No product history found.');

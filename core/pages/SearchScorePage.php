@@ -1,6 +1,6 @@
 <?php
 
-class AloldalPage implements IPageBase
+class SearchScorePage implements IPageBase
 {
     private Template $template;
     

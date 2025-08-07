@@ -186,78 +186,119 @@ class OOSService {
         }
     }
 
-    public function getOOSChartData($startDate = null, $endDate = null) {
+    public function getOOSChartData($startDate = null, $endDate = null, $groupBy = 'weekly') {
         try {
-            $whereClause = "";
-            $params = [];
-            
+            $whereClause = "WHERE a.period_type = ?";
+            $params = [$groupBy];
+
+            // Add date filtering if present
             if ($startDate && $endDate) {
-                $whereClause = "WHERE h.date_checked BETWEEN ? AND ?";
-                $params = [$startDate, $endDate];
-            } elseif ($startDate) {
-                $whereClause = "WHERE h.date_checked >= ?";
-                $params = [$startDate];
-            } elseif ($endDate) {
-                $whereClause = "WHERE h.date_checked <= ?";
-                $params = [$endDate];
+                if ($groupBy === 'daily') {
+                    // e.g., '2025-08-01'
+                    $whereClause .= " AND a.period_value BETWEEN ? AND ?";
+                    $params[] = $startDate;
+                    $params[] = $endDate;
+                } elseif ($groupBy === 'monthly') {
+                    // e.g., '2025-07'
+                    $whereClause .= " AND a.period_value BETWEEN ? AND ?";
+                    $params[] = substr($startDate, 0, 7);
+                    $params[] = substr($endDate, 0, 7);
+                } elseif ($groupBy === 'weekly') {
+                    // e.g., '202531'
+                    $params[] = date('oW', strtotime($startDate));
+                    $params[] = date('oW', strtotime($endDate));
+                    $whereClause .= " AND a.period_value BETWEEN ? AND ?";
+                } elseif ($groupBy === 'yearly') {
+                    // e.g., '2025'
+                    $params[] = date('Y', strtotime($startDate));
+                    $params[] = date('Y', strtotime($endDate));
+                    $whereClause .= " AND a.period_value BETWEEN ? AND ?";
+                }
             }
-            
+
             $query = "
-            SELECT 
-                s.name AS shop_name,
-                s.id AS shop_id,
-                h.date_checked,
-                ROUND(
-                (COUNT(CASE WHEN h.is_available = 0 THEN 1 END) * 100.0 / COUNT(*)),
-                2
-            ) AS availability_percentage
-            FROM oos_history h
-            INNER JOIN shops s ON h.shop_id = s.id
-            {$whereClause}
-            GROUP BY s.id, s.name, h.date_checked
-            ORDER BY h.date_checked ASC, s.name ASC";
-            
+                SELECT 
+                    s.name AS shop_name,
+                    s.id AS shop_id,
+                    a.period_value AS period,
+                    a.oos_percentage,
+                    a.unavailable_products
+                FROM oos_aggregates a
+                INNER JOIN shops s ON a.shop_id = s.id
+                {$whereClause}
+                ORDER BY a.period_value ASC, s.name ASC
+            ";
+
             $stmt = $this->db->prepare($query);
             $stmt->execute($params);
             $results = $stmt->fetchAll();
-            
-            // Transform data for chart format
-            $chartData = $this->transformToChartData($results);
-            
-            return $chartData;
-            
+
+            return $this->transformToChartData($results, $groupBy);
+
         } catch (Exception $e) {
             error_log("Error in getOOSChartData: " . $e->getMessage());
             throw new Exception("Failed to fetch OOS chart data");
         }
     }
 
-    private function transformToChartData($results) {
-        $labels = [];
+    private function transformToChartData($results, $groupBy) {
+        $rawLabels = [];
+        $formattedLabels = [];
         $shopData = [];
-        
-        // Process results
+
+        // Collect raw periods
         foreach ($results as $row) {
-            $date = $row['date_checked'];
+            $period = $row['period'];
             $shopName = $row['shop_name'];
-            $percentage = (float) $row['availability_percentage'];
-            
-            // Collect unique dates for labels
-            if (!in_array($date, $labels)) {
-                $labels[] = $date;
+            $oooProducts = $row['unavailable_products'];
+            $percentage = (float) $row['oos_percentage'];
+
+            // Collect raw periods
+            if (!in_array($period, $rawLabels)) {
+                $rawLabels[] = $period;
             }
-            
+
             // Initialize shop data if not exists
             if (!isset($shopData[$shopName])) {
                 $shopData[$shopName] = [];
             }
-            
-            $shopData[$shopName][$date] = $percentage;
+
+            $shopData[$shopName][$period] = $percentage;
+            //$shopData[$shopName][$oooProducts] = $oooProducts;
         }
-        
-        // Sort labels chronologically
-        sort($labels);
-        
+
+        // Sort raw labels (periods) chronologically
+        sort($rawLabels);
+
+        // Format labels
+        foreach ($rawLabels as $raw) {
+            switch ($groupBy) {
+                case 'weekly':
+                    // Format: 202531 => "Week 31, 2025"
+                    $year = substr($raw, 0, 4);
+                    $week = substr($raw, 4);
+                    $formattedLabels[$raw] = "Week $week, $year";
+                    break;
+
+                case 'monthly':
+                    // Format: 2025-08 => "Aug 2025"
+                    $dt = DateTime::createFromFormat('Y-m', $raw);
+                    $formattedLabels[$raw] = $dt ? $dt->format('M Y') : $raw;
+                    break;
+
+                case 'yearly':
+                    $formattedLabels[$raw] = $raw;
+                    break;
+
+                case 'daily':
+                default:
+                    // Format: 2025-08-01 => "Aug 1, 2025"
+                    $dt = DateTime::createFromFormat('Y-m-d', $raw);
+                    $formattedLabels[$raw] = $dt ? $dt->format('M j, Y') : $raw;
+                    break;
+            }
+        }
+
         // Create datasets
         $datasets = [];
         $colors = [
@@ -265,31 +306,30 @@ class OOSService {
             '#4facfe', '#00f2fe', '#43e97b', '#38f9d7',
             '#ffecd2', '#fcb69f', '#a8edea', '#fed6e3'
         ];
-        
+
         $colorIndex = 0;
         foreach ($shopData as $shopName => $data) {
             $dataPoints = [];
-            
-            // Fill data points for each date
-            foreach ($labels as $date) {
-                $dataPoints[] = isset($data[$date]) ? $data[$date] : null;
+
+            foreach ($rawLabels as $raw) {
+                $dataPoints[] = isset($data[$raw]) ? $data[$raw] : null;
             }
-            
+
             $datasets[] = [
                 'label' => $shopName,
                 'data' => $dataPoints,
                 'borderColor' => $colors[$colorIndex % count($colors)],
-                'backgroundColor' => $colors[$colorIndex % count($colors)] . '20', // Add transparency
+                'backgroundColor' => $colors[$colorIndex % count($colors)] . '20',
                 'borderWidth' => 2,
                 'fill' => false,
                 'tension' => 0.1
             ];
-            
+
             $colorIndex++;
         }
-        
+
         return [
-            'labels' => $labels,
+            'labels' => array_values($formattedLabels),
             'datasets' => $datasets
         ];
     }
