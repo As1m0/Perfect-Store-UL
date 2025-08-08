@@ -4,6 +4,7 @@
 require_once 'classes/QueryGenerator.php';
 require_once 'classes/ApiResponse.php';
 require_once 'classes/OOSService.php';
+require_once 'classes/ProductService.php';
 require_once 'config/database.php';
 require_once '../config.php';
 
@@ -30,6 +31,7 @@ function sanitizeInput($input) {
 try {
     global $cfg;
     $oosService = new OOSService($cfg);
+    $productService = new ProductService($cfg);
     $requestUri = $_SERVER['REQUEST_URI'];
     $requestMethod = $_SERVER['REQUEST_METHOD'];
     
@@ -42,17 +44,17 @@ try {
         case 'GET':
             switch (end($pathParts)) {
                 case 'categories':
-                    $data = $oosService->getCategories();
+                    $data = $productService->getCategories();
                     echo ApiResponse::success($data, 'Categories retrieved successfully');
                     break;
                     
                 case 'brands':
-                    $data = $oosService->getBrands();
+                    $data = $productService->getBrands();
                     echo ApiResponse::success($data, 'Brands retrieved successfully');
                     break;
                     
                 case 'sub-categories':
-                    $data = $oosService->getSubcategories();
+                    $data = $productService->getSubcategories();
                     echo ApiResponse::success($data, 'Subcategories retrieved successfully');
                     break;
                     
@@ -87,6 +89,19 @@ try {
                     
                     $data = $oosService->getOOSData($options);
                     echo ApiResponse::success($data, 'OOS data retrieved successfully');
+                    break;
+
+                case 'prod-list':
+                    $input = json_decode(file_get_contents('php://input'), true);
+
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        echo ApiResponse::error('Invalid JSON in request body', 400);
+                        break;
+                    }
+                    $input = sanitizeInput($input);
+
+                    $data = $productService->getProductList($input);
+                    echo ApiResponse::success($data, 'Product list retrieved successfully');
                     break;
 
                 case 'untrack-product':
@@ -133,7 +148,7 @@ try {
                 }
                 break;
 
-                case 'check-ean': //TODO set to GET
+                case 'check-ean':
                 $input = json_decode(file_get_contents('php://input'), true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     echo ApiResponse::error('Invalid JSON in request body', 400);
@@ -142,7 +157,7 @@ try {
                 $input = sanitizeInput($input);
                 $ean = $input['EAN'] ?? '';
                 if ($ean) {
-                    $data = $oosService->getProductByEANwithIds($ean);
+                    $data = $productService->getProductByEANwithIds($ean);
                     if ($data) {        
                         echo ApiResponse::success($data, 'Product retrieved successfully');
                     } else {
@@ -166,7 +181,7 @@ try {
                 $categoryId = $input['category_id'] ?? '';
                 $subcategoryId = $input['subcategory_id'] ?? '';
                 if ($ean && $name && $brandId && $categoryId && $subcategoryId) {
-                    $result = $oosService->addProduct($ean, $name, $brandId, $categoryId, $subcategoryId);
+                    $result = $productService->addProduct($ean, $name, $brandId, $categoryId, $subcategoryId);
                     if ($result) {
                         echo ApiResponse::success(null, 'Product added successfully');
                     } else {
@@ -233,6 +248,26 @@ try {
                     }
                 } else {
                     echo ApiResponse::error('EAN, ShopId  parameters required', 400);
+                }
+                break;
+
+                case'remove-product':
+                $input = json_decode(file_get_contents('php://input'), true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    echo ApiResponse::error('Invalid JSON in request body', 400);
+                    break;
+                }
+                $input = sanitizeInput($input);
+                $ean = $input['EAN'] ?? '';
+                if ($ean) {
+                    $result = $productService->removeProduct($ean);
+                    if ($result) {
+                        echo ApiResponse::success(null, 'Product removed successfully');
+                    } else {
+                        echo ApiResponse::error('Failed to remove product', 500);
+                    }
+                } else {
+                    echo ApiResponse::error('EAN parameter required', 400);
                 }
                 break;
 

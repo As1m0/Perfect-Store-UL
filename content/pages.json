@@ -16,5 +16,11 @@
         "template" : "login.html",
         "fullTemplate" : false,
         "class" : "LoginPage"
+    },
+        {
+        "page" : "product-list",
+        "template" : "product-list.html",
+        "fullTemplate" : false,
+        "class" : "ProductListPage"
     }
 ]

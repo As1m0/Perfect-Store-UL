@@ -429,7 +429,7 @@ body {
 }
 
 .navbar {
-    background-color: #2039c6;
+    background-color: #2039c6 !important;
 }
 
 .navbar a,
@@ -490,7 +490,7 @@ p {
     margin: 0;
 }
 
-.untrack-btn {
+.untrack-btn, .remove-btn {
     width: 80px;
     background: transparent;
     color: #dc3545;
@@ -504,11 +504,13 @@ p {
 }
 
 .untrack-btn:hover,
-.edit-url-btn:hover {
+.edit-btn:hover, 
+.edit-url-btn:hover, 
+.reomve-btn:hover {
     opacity: 0.8;
 }
 
-.edit-url-btn {
+.edit-url-btn, .edit-btn {
     width: 80px;
     background: #a7afd3;
     color: white;

@@ -1,0 +1,166 @@
+<h4 class="text-center">Product List</h4>
+
+<div class="dark-layer" id="newProductFormLayer" style="display: none">
+    <div class="container new-product-container mt-5">
+        <h2>Add New Product</h2>
+        <form id="newProductForm" class="form">
+
+            <div class="filter-group form-group">
+                <label for="newEan">EAN</label>
+                <input type="text form-control w-100" id="newEan" name="newEan" required value="">
+            </div>
+            <div class="filter-group my-3 form-group">
+                <label>Brand</label>
+                <select class="w-100 form-control" id="brandDropdown2" name="newBrand" required>
+                    <option value="">Select Brand</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            <div class="filter-group my-3 form-group">
+                <label>Categories</label>
+                <select class="w-100 form-control" id="categoryDropdown2" name="newCategory" required>
+                    <option value="">Select Category</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            <div class="filter-group my-3 form-group">
+                <label for="newSubcategory">Subcategory</label>
+                <select class="w-100 form-control" id="subcategoryDropdown2" name="newSubcategory" required>
+                    <option value="">Select Subcategory</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            <div class="filter-group my-3 form-group">
+                <label for="name">Product Name</label>
+                <input class="w-100" type="text" id="newName" name="newName" required>
+            </div>
+            
+
+            <div class="my-3 mx-auto text-center">
+                <input type="submit" value="Add Product" name="addProduct" class="btn btn-success mt-3 d-none" id="addProductButton">
+                <input type="submit" value="Edit Product" name="editProduct" class="btn btn-primary mt-3 d-none" id="editProductButton"">
+                <button type="button" class="btn btn-secondary mt-3" onclick="closeNewProductForm()">Cancel</button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+
+<div class="cust-container">
+
+    <div class="filters">
+        <div class="filter-grid">
+
+            <div class="filter-group fix-height">
+                <label>Brands</label>
+                <div class="multi-select" id="brandSelect">
+                    <input type="text" placeholder="Select brands..." readonly>
+                    <div class="multi-select-dropdown" id="brandDropdown"></div>
+                    <div class="selected-tags" id="brandTags"></div>
+                </div>
+            </div>
+
+            <div class="filter-group fix-height">
+                <label>Categories</label>
+                <div class="multi-select" id="categorySelect">
+                    <input type="text" placeholder="Select categories..." readonly>
+                    <div class="multi-select-dropdown" id="categoryDropdown"></div>
+                    <div class="selected-tags" id="categoryTags"></div>
+                </div>
+            </div>
+
+            <div class="filter-group fix-height">
+                <label>Sub-Categories</label>
+                <div class="multi-select" id="subcategorySelect">
+                    <input type="text" placeholder="Select sub-categories..." readonly>
+                    <div class="multi-select-dropdown" id="subcategoryDropdown"></div>
+                    <div class="selected-tags" id="subcategoryTags"></div>
+                </div>
+            </div>
+
+            <div class="filter-group fix-height">
+                <label>Search by name</label>
+                <input type="text" id="searchName" placeholder="Search by product name..." style="min-width: 200px;">
+            </div>
+
+            <div class="filter-group fix-height">
+                <label>Search by EAN</label>
+                <input type="text" id="searchEAN" placeholder="Search by EAN..." style="min-width: 200px;">
+            </div>
+
+        </div>
+
+        <div class="controls">
+            <div class="sort-controls" style="display: none;">
+                <label>Sort by:</label>
+                <select id="sortColumn">
+                    <option value="category">Category</option>
+                    <option value="subcategory">Subcategory</option>
+                    <option value="brand">Brand</option>
+                    <option value="name">Product Name</option>
+                    <option value="last_status">Last Status</option>
+                    <option value="oos_percentage">Availability %</option>
+                    <option value="days_oos">Days OOS</option>
+                </select>
+                <select id="sortDirection">
+                    <option value="ASC">Ascending</option>
+                    <option value="DESC">Descending</option>
+                </select>
+            </div>
+
+
+            <div class="row mx-auto mt-3 w-100">
+                <div class="col-6"><button class="btn btn-success" onclick="openNewProductForm('add')">+ add</button>
+                </div>
+                <div class="col-6">
+                    <div style="float: right">
+                        <button class="btn btn-primary" onclick="loadData()" style="width: 150px;">Search</button>
+                        <button class="btn btn-secondary" onclick="clearFilters()">Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="loadingIndicator" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>Loading data...</p>
+    </div>
+
+    <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+
+    <div class="result-count" style="position: relative;">
+        <p id="resultCount"></p>
+        <img src="content/img/excel-icon.png" onclick="exportTableToExcel('dataTable', 'UL_product_list')"
+            id="excel-icon" alt="excel">
+    </div>
+
+    <div class="table-container">
+        <table class="data-table" id="dataTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th class="sortable" data-column="category">Category</th>
+                    <th class="sortable" data-column="subcategory">Subcategory</th>
+                    <th class="sortable" data-column="brand">Brand</th>
+                    <th class="sortable" data-column="ean">EAN</th>
+                    <th class="sortable" data-column="name" style="width: 500px;">Product Name</th>
+                    <th class="" data-column="">
+                        options
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+        <div id="noDataMessage" class="no-data" style="display: none;">
+            <p>📊 No data found. Try adjusting your filters.</p>
+        </div>
+    </div>
+
+
+</div>
+
+
+<script src="template/js/prod-list-table-handler.js">

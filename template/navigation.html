@@ -1,31 +1,31 @@
-<nav class="navbar navbar-expand-lg">
-    <img src="content/img/UL-logo.png" alt="UL Logo" class="navbar-logo mx-2" style="width: 30px;">
-    <a class="navbar-brand px-2" href="#">Perfec Store Online</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav mr-auto">
-            <li class="nav-item">
-                <a class="nav-link" href="index.php">OOS report</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="index.php?p=search-score">Search Score</a>
-            </li>
-        </ul>
-        <ul class="navbar-nav ms-auto" id="nav-rigth">
-            <li class="nav-item dropdown profile">
-                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
-                    aria-expanded="false">
-                    user
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                    <li class="dropdown-item">%!USERMAIL!%</li>
-                    <li><a class="dropdown-item text-danger" href="index.php?logout=true">Sign out</a></li>
-                </ul>
-            </li>
-        </ul>
+<nav class="navbar bg-light flex-column align-items-start p-3" style="min-height: 100vh; width: 250px;">
+    <div class="d-flex align-items-center mb-4">
+        <img src="content/img/UL-logo.png" alt="UL Logo" class="navbar-logo me-2" style="width: 30px;">
+        <a class="navbar-brand" href="#">Perfec Store Online</a>
     </div>
+
+    <ul class="navbar-nav flex-column w-100">
+        <li class="nav-item">
+            <a class="nav-link" href="index.php">OOS report</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="index.php?p=search-score">Search Score</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="index.php?p=product-list">Product List</a>
+        </li>
+    </ul>
+
+    <ul class="navbar-nav flex-column mt-auto w-100">
+        <li class="nav-item dropdown profile">
+            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
+                aria-expanded="false">
+                user
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                <li class="dropdown-item">%!USERMAIL!%</li>
+                <li><a class="dropdown-item text-danger" href="index.php?logout=true">Sign out</a></li>
+            </ul>
+        </li>
+    </ul>
 </nav>

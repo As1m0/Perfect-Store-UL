@@ -14,14 +14,6 @@
 <body>
     <script>
         const API_BASE_URL = "%!APIBASEURL!%";
-    </script>
-    <div id="feedbackMessage" class="feedback-message" style="display: none;"></div>
-    %!NAV!%
-    %!CONTENT!%
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-        crossorigin="anonymous"></script>
-    <script>
         //feedback message
         function showPopUpFeedback(message, success = true) {
             const feedbackDiv = document.getElementById('feedbackMessage');
@@ -35,7 +27,18 @@
             setTimeout(() => {
                 feedbackDiv.style.display = 'none';
             }, 3000);
-        }</script>
+        }
+    </script>
+    <div id="feedbackMessage" class="feedback-message" style="display: none;"></div>
+    <div class="d-flex">
+        %!NAV!%
+        <div class="flex-grow-1 p-4">
+            %!CONTENT!%
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
 </body>
 
 </html>

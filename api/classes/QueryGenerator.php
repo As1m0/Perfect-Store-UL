@@ -170,4 +170,68 @@ class QueryGenerator {
 
         return $params;
     }
+
+    public static function generateProductListQuery($options = [])
+    {
+        $filters = $options['filters'] ?? [];
+        $sort = $options['sort'] ?? ['column' => 'category', 'direction' => 'ASC'];
+
+        
+        // Validate sort column
+        $validSortColumns = [
+            'category', 'subcategory', 'brand', 'ean', 'name',
+            'last_status', 'oos_percentage', 'days_oos'
+        ];
+        $sortColumn = in_array($sort['column'], $validSortColumns) ? $sort['column'] : 'category';
+        $sortDirection = in_array(strtoupper($sort['direction']), ['ASC', 'DESC'])
+            ? strtoupper($sort['direction'])
+            : 'ASC';
+
+        // Base query
+        $query = "SELECT 
+                p.ean,
+                p.name,
+                b.id AS brand_id,
+                b.name AS brand_name,
+                c.id AS category_id,
+                c.name AS category_name,
+                sc.id AS subcategory_id,
+                sc.name AS subcategory_name
+            FROM products p
+            LEFT JOIN brands b ON p.brand_id = b.id
+            LEFT JOIN categories c ON p.category_id = c.id
+            LEFT JOIN subcategories sc ON p.subcategory_id = sc.id";
+
+        // WHERE clause builder
+        $whereConditions = [];
+
+        if (!empty($filters['category'])) {
+            $categories = is_array($filters['category']) ? $filters['category'] : [$filters['category']];
+            $placeholders = implode(',', array_fill(0, count($categories), '?'));
+            $whereConditions[] = "c.name IN ($placeholders)";
+        }
+
+        if (!empty($filters['subcategory'])) {
+            $subcategories = is_array($filters['subcategory']) ? $filters['subcategory'] : [$filters['subcategory']];
+            $placeholders = implode(',', array_fill(0, count($subcategories), '?'));
+            $whereConditions[] = "sc.name IN ($placeholders)";
+        }
+
+        if (!empty($filters['brand'])) {
+            $brands = is_array($filters['brand']) ? $filters['brand'] : [$filters['brand']];
+            $placeholders = implode(',', array_fill(0, count($brands), '?'));
+            $whereConditions[] = "b.name IN ($placeholders)";
+        }
+
+        if (!empty($whereConditions)) {
+            $query .= "\nWHERE " . implode(' AND ', $whereConditions);
+        }
+
+        // ORDER BY
+        $query .= "\nORDER BY {$sortColumn}_name {$sortDirection}";
+
+        return $query;
+    }
+
+
 }

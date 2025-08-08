@@ -38,51 +38,6 @@ class OOSService {
     }
 
     /**
-     * Get all categories
-     */
-    public function getCategories() {
-        try {
-            $query = "SELECT id, name FROM categories ORDER BY name";
-            $stmt = $this->db->prepare($query);
-            $stmt->execute();
-            return $stmt->fetchAll();
-        } catch (Exception $e) {
-            error_log("Error in getCategories: " . $e->getMessage());
-            throw new Exception("Failed to fetch categories");
-        }
-    }
-
-    /**
-     * Get all brands
-     */
-    public function getBrands() {
-        try {
-            $query = "SELECT id, name FROM brands ORDER BY name";
-            $stmt = $this->db->prepare($query);
-            $stmt->execute();
-            return $stmt->fetchAll();
-        } catch (Exception $e) {
-            error_log("Error in getBrands: " . $e->getMessage());
-            throw new Exception("Failed to fetch brands");
-        }
-    }
-
-    /**
-     * Get all subcategories
-     */
-    public function getSubcategories() {
-        try {
-            $query = "SELECT id, name FROM subcategories ORDER BY name";
-            $stmt = $this->db->prepare($query);
-            $stmt->execute();
-            return $stmt->fetchAll();
-        } catch (Exception $e) {
-            error_log("Error in getSubcategories: " . $e->getMessage());
-            throw new Exception("Failed to fetch subcategories");
-        }
-    }
-
-    /**
      * Get all shops
      */
     public function getShops() {
@@ -111,23 +66,6 @@ class OOSService {
         }
     }
 
-    public function addProduct($ean, $name, $brandId, $categoryId, $subcategoryId): bool {
-        try {
-                $query = "INSERT INTO products (ean, name, brand_id, category_id, subcategory_id) VALUES (:ean, :name, :brandId, :categoryId, :subcategoryId)";
-                $stmt = $this->db->prepare($query);
-                return $stmt->execute([
-                    ':ean' => $ean,
-                    ':name' => $name,
-                    ':brandId' => $brandId,
-                    ':categoryId' => $categoryId,
-                    ':subcategoryId' => $subcategoryId
-                ]);
-        } catch (Exception $e) {
-            error_log("Error in addProduct: " . $e->getMessage());
-            throw new Exception("Failed to add product");
-        }
-    }
-
     public function editProductUrl($ean, $shopId, $productUrl): bool {
         try {
             $query = "UPDATE urls SET url = :url WHERE ean = :ean AND shop_id = :shopId";
@@ -139,31 +77,6 @@ class OOSService {
         }
     }
 
-    public function getProductByEANwithIds($ean): array {
-        try {
-            $query = "SELECT 
-                p.ean,
-                p.name,
-                b.id AS brand_id,
-                b.name AS brand_name,
-                c.id AS category_id,
-                c.name AS category_name,
-                sc.id AS subcategory_id,
-                sc.name AS subcategory_name
-            FROM products p
-            LEFT JOIN brands b ON p.brand_id = b.id
-            LEFT JOIN categories c ON p.category_id = c.id
-            LEFT JOIN subcategories sc ON p.subcategory_id = sc.id
-            WHERE p.ean = :ean";
-            
-            $stmt = $this->db->prepare($query);
-            $stmt->execute([':ean' => $ean]);
-            return $stmt->fetchAll();
-        } catch (Exception $e) {
-            error_log("Error in getProductByEANwithIds: " . $e->getMessage());
-            throw new Exception("Failed to fetch product by EAN");
-        }
-    }
 
     public function addProductLink($ean, $shopId, $productUrl): bool {
         try {

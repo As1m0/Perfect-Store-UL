@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeMultiSelect();
     loadInitialData();
     setupEventListeners();
-    document.getElementById('startDateTable').value = getDateAgo();
 });
 
 // Initialize multi-select dropdowns
@@ -76,28 +75,11 @@ function setupEventListeners() {
 async function loadInitialData() {
     try {
         // Load categories and brands for filters
-        const [shopresponese, categoriesResponse, subCategoriesResponse, brandsResponse] = await Promise.all([
-            fetch(`${API_BASE_URL}/shops`),
+        const [categoriesResponse, subCategoriesResponse, brandsResponse] = await Promise.all([
             fetch(`${API_BASE_URL}/categories`),
             fetch(`${API_BASE_URL}/sub-categories`),
             fetch(`${API_BASE_URL}/brands`)
         ]);
-
-        if (shopresponese.ok) {
-            const shopData = await shopresponese.json();
-            shops = shopData.success ? shopData.data : [];
-            const dropDowns = [document.getElementById('shopDropdown'), document.getElementById('newshopSelect')];
-            for (const dropdown of dropDowns) {
-                if (!dropdown) continue;
-                shops.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item.id; // Assuming each item has an 'id' field
-                    option.textContent = item.name ? item.name.toUpperCase() : '';
-                    dropdown.appendChild(option);
-                });
-            }
-            document.getElementById('shopDropdown').selectedIndex = 2;
-        }
 
         if (categoriesResponse.ok) {
             const categoriesData = await categoriesResponse.json();
@@ -128,39 +110,6 @@ async function loadInitialData() {
     }
 }
 
-async function untrackProduct(ean, shopId) {
-    if (!confirm(`Are you sure you want to untrack product with EAN ${ean} in shop ${shopId}?`)) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/untrack-product`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ EAN: parseInt(ean), shopId: parseInt(shopId) })
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const responseData = await response.json();
-        if (!responseData.success) {
-            throw new Error(responseData.message || 'API returned error');
-        }
-
-        // Reload data after deletion
-        loadData();
-        showPopUpFeedback(`Product with EAN ${ean} has been successfully untracked.`, true);
-    } catch (error) {
-        console.error('Error deleting product:', error);
-        showError('Failed to untrack product. Please try again.');
-    } finally {
-        hideLoading();
-    }
-}
 
 // Populate multi-select dropdown
 function populateMultiSelect(type, data, textField) {
@@ -193,7 +142,7 @@ function populateMultiSelect(type, data, textField) {
     });
 }
 
-function populateNewProductSelect(type, data, textField, elementName = 'Dropdown2') {
+function populateNewProductSelect(type, data, textField, elementName) {
     const dropdown = document.getElementById(`${type}Dropdown2`);
     data.forEach(item => {
         const option = document.createElement('option');
@@ -230,11 +179,6 @@ function updateSelectedTags(type, selectedArray, textConverter = null) {
     });
 }
 
-// Get status text for display
-function getStatusText(value) {
-    const statusMap = { '1': 'In Stock', '0': 'Out of Stock', '-1': 'Unavailable' };
-    return statusMap[value] || value;
-}
 
 // Load data from API
 async function loadData() {
@@ -242,7 +186,6 @@ async function loadData() {
     hideError();
     try {
         const requestData = {
-            shopId: parseInt(document.getElementById('shopDropdown').value),
             filters: {},
             sort: {
                 column: document.getElementById('sortColumn').value,
@@ -261,18 +204,7 @@ async function loadData() {
             requestData.filters.last_status = selectedStatuses.map(s => parseInt(s));
         }
 
-        // Add date filters
-        const startDateInput = document.getElementById('startDateTable');
-        const endDateInput = document.getElementById('endDateTable');
-        
-        if (startDateInput && startDateInput.value) {
-            requestData.filters.start_time = startDateInput.value;
-        }
-        if (endDateInput && endDateInput.value) {
-            requestData.filters.end_time = endDateInput.value;
-        }
-
-        const response = await fetch(`${API_BASE_URL}/oos-data`, {
+        const response = await fetch(`${API_BASE_URL}/prod-list`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -301,13 +233,7 @@ async function loadData() {
     }
 }
 
-// Get product name with link HTML
-function getProductNameLink(name, url) {
-    if (url && url.trim() !== '') {
-        return `<a href="${url}" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 500;">${name}</a>`;
-    }
-    return name;
-}
+
 
 // Display data in table
 function displayData(data) {
@@ -331,61 +257,50 @@ function displayData(data) {
     data.forEach(row => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${row.category || '-'}</td>
-            <td>${row.subcategory || '-'}</td>
-            <td>${row.brand || '-'}</td>
+            <td>${row.category_name || '-'}</td>
+            <td>${row.subcategory_name || '-'}</td>
+            <td>${row.brand_name || '-'}</td>
             <td>${row.ean}</td>
-            <td>${getProductNameLink(row.name, row.product_url)}</td>
-            <td>${getStatusBadge(row.last_status)}</td>
-            <td>${getPercentageBar(row.oos_percentage)}</td>
-            <td><strong>${row.days_oos}</strong></td>
-            <td onclick="showProductHistory('${row.ean}', '${document.getElementById('shopDropdown').value}' , event)"><img class="history-icon" src="content/img/history_icon.svg"></td>
+            <td>${row.name}</td>
             <td>
-            <button class="edit-url-btn" onclick="editUrl('${row.ean}', '${document.getElementById('shopDropdown').value}', '${row.product_url}')">EDIT</button>
-            <button class="untrack-btn" onclick="untrackProduct('${row.ean}', '${document.getElementById('shopDropdown').value}')">UNTRACK</button>
+            <button onclick="openNewProductForm('edit', '${row.ean}')" class="edit-btn">Edit</button>
+            <button onclick="removeProduct('${row.ean}')" class="remove-btn">Remove</button>
             </td>
         `;
         tableBody.appendChild(tr);
     });
 
-    let totalOOSScore = 0;
-    let sumOOSScore = 0;
-    data.forEach(row => {
-        const percentage = parseFloat(row.oos_percentage) || 0;
-        sumOOSScore += percentage;
-    });
-    totalOOSScore = (sumOOSScore / data.length).toFixed(1);
-    document.getElementById('oos-rate-score').textContent = `${totalOOSScore}%`;
-
 }
 
-// Edit product URL POP-up
-function editUrl(ean, shopId, currentUrl) {
-    const newUrl = prompt('Enter new product URL:', currentUrl);
-    if (newUrl === null || newUrl.trim() === '') {
-        return; // User cancelled or entered empty URL
-    }
+function editProduct(ean) {
+    //TDOD
+}
 
-    fetch(`${API_BASE_URL}/edit-product-url`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ EAN: parseInt(ean), shopId: parseInt(shopId), product_url: newUrl })
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showPopUpFeedback('Product URL updated successfully.', true);
-                loadData(); // Reload data to reflect changes
-            } else {
-                throw new Error(data.message || 'Failed to update product URL');
-            }
-        })
-        .catch(error => {
-            console.error('Error updating product URL:', error);
-            showPopUpFeedback('Failed to update product URL. Please try again.', false);
-        })
+function removeProduct(ean) {
+    if (confirm(`Are you sure you want to remove product with EAN: ${ean}?`)) {
+        if (confirm(`All history / search / content data will be lost for this product. Are you sure?`)) {
+            fetch(`${API_BASE_URL}/remove-product`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ EAN: parseInt(ean) })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showFeedback(`Product with EAN: ${ean} removed successfully.`);
+                        loadData(); // Reload data after removal
+                    } else {
+                        throw new Error(data.message || 'Failed to remove product');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error removing product:', error);
+                    showError('Failed to remove product. Please try again later.');
+                });
+        }
+    }
 }
 
 // Search by product name
@@ -397,28 +312,19 @@ document.getElementById('searchName').addEventListener('input', function () {
     displayData(filteredData);
 });
 
-// Get status badge HTML
-function getStatusBadge(status) {
-    const statusMap = {
-        1: { text: 'In Stock', class: 'status-in-stock' },
-        0: { text: 'Out of Stock', class: 'status-out-of-stock' },
-        '-1': { text: 'Unavailable', class: 'status-unavailable' }
-    };
+//search by ean
+document.getElementById('searchEAN').addEventListener('input', function () {
+    const searchTerm = this.value.trim();
+    if (searchTerm.length < 8) {
+        displayData(currentData); // Reset to full data if search term is too short
+        return;
+    }
+    const filteredData = currentData.filter(row => {
+        return row.ean.toString().includes(searchTerm);
+    });
+    displayData(filteredData);
+});
 
-    const statusInfo = statusMap[status] || statusMap['-1'];
-    return `<span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>`;
-}
-
-// Get percentage bar HTML
-function getPercentageBar(percentage) {
-    const value = parseFloat(percentage) || 0;
-    return `
-                <div class="percentage-bar">
-                    <div class="percentage-fill" style="width: ${value}%"></div>
-                    <div class="percentage-text">${value}%</div>
-                </div>
-            `;
-}
 
 // Update sort headers
 function updateSortHeaders() {
@@ -449,9 +355,6 @@ function clearFilters() {
         option.classList.remove('selected');
     });
 
-    //  clear date filters
-    document.getElementById('startDateTable').value = getDateAgo();
-    document.getElementById('endDateTable').value = '';
 
     // Clear tags
     document.querySelectorAll('.selected-tags').forEach(container => {
@@ -463,6 +366,8 @@ function clearFilters() {
     document.getElementById('sortDirection').value = 'ASC';
 
     document.getElementById('searchName').value = '';
+
+    document.getElementById('searchEAN').value = '';
 
     // Load data
     loadData();
@@ -515,28 +420,40 @@ function exportTableToExcel(tableID, filename = '') {
 
 
 // Open new product form
-function openNewProductForm() {
+function openNewProductForm(method, ean = null) {
+    resetNewProductForm();
+    const NewEanInput = document.getElementById('newEan');
+
+    if (method === 'edit') {
+        document.getElementById('editProductButton').classList.remove('d-none');
+        document.getElementById('newProductForm').setAttribute('onsubmit', 'editProduct(event)');
+        checkEanExistsInDB(ean);
+        NewEanInput.value = ean;
+        NewEanInput.readOnly = true;
+    } else if (method === 'add') {
+        document.getElementById('addProductButton').classList.remove('d-none');
+        document.getElementById('newProductForm').setAttribute('onsubmit', 'submitNewProductForm(event)');
+        NewEanInput.addEventListener('input', function () {
+            const ean = NewEanInput.value.trim();
+            if (ean.length >= 8) {
+                checkEanExistsInDB(ean);
+            }
+            else {
+                resetNewProductForm();
+            }
+        });
+    }
+
     document.getElementById('newProductFormLayer').style.display = 'block';
-    //document.getElementById('newProductFeedback').style.display = 'none';
     document.getElementById('newProductForm').reset();
 }
 
 // Close new product form
 function closeNewProductForm() {
     document.getElementById('newProductFormLayer').style.display = 'none';
-    //document.getElementById('newProductFeedback').style.display = 'none';
+    document.getElementById('editProductButton').classList.add('d-none');
+    document.getElementById('addProductButton').classList.add('d-none');
 }
-
-const NewEanInput = document.getElementById('newEan');
-NewEanInput.addEventListener('input', function () {
-    const ean = NewEanInput.value.trim();
-    if (ean.length >= 8) {
-        checkEanExistsInDB(ean);
-    }
-    else {
-        resetNewProductForm();
-    }
-});
 
 
 let ProductExists = false;
@@ -561,8 +478,12 @@ async function checkEanExistsInDB(ean) {
             console.log('EAN exists in the database:', data);
             ProductExists = true;
             fillBackDataInFrom(data.data);
+            document.getElementById('addProductButton').classList.add('disabled');
+            document.getElementById('addProductButton').value = "already exists";
         } else {
             ProductExists = false;
+            document.getElementById('addProductButton').classList.remove('disabled');
+            document.getElementById('addProductButton').value = "add product";
             resetNewProductForm();
             console.log('EAN does not exist in the database:', data.message);
         }
@@ -578,15 +499,13 @@ function resetNewProductForm() {
     document.getElementById('newName').value = '';
     document.getElementById('categoryDropdown2').value = '';
     document.getElementById('brandDropdown2').value = '';
-    document.getElementById('newProductFeedback').textContent = '';
-    document.getElementById('newProductFeedback').style.display = 'none';
-    document.getElementById('newProductFeedback').style.backgroundColor = '';
+    document.getElementById('addProductButton').classList.remove('disabled');
+    document.getElementById('addProductButton').value = "add product";
 }
 
 // Fill form with existing product data
 function fillBackDataInFrom(product) {
     document.getElementById('newName').value = product[0].name || '';
-    document.getElementById('newName').style.borded = "1px solid green";
     document.getElementById('subcategoryDropdown2').value = product[0].subcategory_id || '';
     document.getElementById('categoryDropdown2').value = product[0].category_id || '';
     document.getElementById('brandDropdown2').value = product[0].brand_id || '';
@@ -599,14 +518,11 @@ function submitNewProductForm(event) {
     const categoryId = document.getElementById('categoryDropdown2').value;
     const subcategoryId = document.getElementById('subcategoryDropdown2').value;
     const brandId = document.getElementById('brandDropdown2').value;
-    const link = document.getElementById('newLink').value.trim();
 
     if (!ean || !name || !categoryId || !subcategoryId || !brandId) {
         alert('Please fill in all required fields.');
         return;
     }
-
-
     if (!ProductExists) {
         fetch(`${API_BASE_URL}/add-product`, {
             method: 'POST',
@@ -625,6 +541,13 @@ function submitNewProductForm(event) {
             .then(data => {
                 if (data.success) {
                     showPopUpFeedback('Product added successfully.');
+
+                    loadData(); // Reload data after adding product
+                    setTimeout(() => {
+                        resetNewProductForm();
+                        document.getElementById('newProductFormLayer').style.display = 'none';
+                        document.getElementById('newProductForm').reset();
+                    }, 500);
                 } else {
                     throw new Error(data.message || 'Failed to add product');
                 }
@@ -634,142 +557,57 @@ function submitNewProductForm(event) {
                 showPopUpFeedback('Failed to add product. Please try again.', false);
             })
     }
+    else {
+        showPopUpFeedback('Product already exists in the database. Please edit it instead.', false);
+    }
 
     ProductExists = false; // Reset ProductExists for next submission
 
+}
 
-    fetch(`${API_BASE_URL}/add-product-link`, {
+function editProduct(event) {
+    event.preventDefault();
+    const ean = document.getElementById('newEan').value.trim();
+    const name = document.getElementById('newName').value.trim();
+    const categoryId = document.getElementById('categoryDropdown2').value;
+    const subcategoryId = document.getElementById('subcategoryDropdown2').value;
+    const brandId = document.getElementById('brandDropdown2').value;
+
+    if (!ean || !name || !categoryId || !subcategoryId || !brandId) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+
+    fetch(`${API_BASE_URL}/edit-product`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
             EAN: parseInt(ean),
-            shopId: parseInt(document.getElementById('newshopSelect').value),
-            product_url: link
+            name,
+            category_id: parseInt(categoryId),
+            subcategory_id: parseInt(subcategoryId),
+            brand_id: parseInt(brandId),
         })
-
     })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showPopUpFeedback('Product link added successfully.');
+                showPopUpFeedback('Product edited successfully.');
+
+                loadData(); // Reload data after editing product
                 setTimeout(() => {
-                    closeNewProductForm();
                     resetNewProductForm();
-                    loadData();
+                    document.getElementById('newProductFormLayer').style.display = 'none';
+                    document.getElementById('newProductForm').reset();
                 }, 500);
             } else {
-                throw new Error(data.message || 'Failed to add product link');
+                throw new Error(data.message || 'Failed to edit product');
             }
         })
         .catch(error => {
-            console.error('Error adding product link:', error);
-            showPopUpFeedback('Failed to add product link. Please try again.', false);
-        })
-}
-
-
-async function loadProductHistory(ean, shopId, startDate = null, endDate = null) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/product-history`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ ean: parseInt(ean), shop_id: parseInt(shopId), start_date: startDate ? startDate : null, end_date: endDate ? endDate : null  })
+            console.error('Error editing product:', error);
+            showPopUpFeedback('Failed to edit product. Please try again.', false);
         });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        if (data.success && data.data && data.data.length > 0) {
-            return data;
-        } else {
-            return null;
-        }
-    } catch (error) {
-        console.error('Error loading product history:', error);
-        return null;
-    }
 }
-
-function showProductHistory(ean, shopId, event) {
-    document.getElementById("productHistoryModal").style.display = "block";
-    const triggerElement = event.currentTarget; // or event.target if you want the <img>
-    const rect = triggerElement.getBoundingClientRect();
-
-    // Get scroll offsets in case the page is scrolled
-    const top = rect.top + window.scrollY;
-    const left = rect.left + window.scrollX;
-
-    // Show and position the popup
-    const popup = document.getElementById("productHistoryModal");
-    popup.style.position = "absolute";
-    popup.style.top = `${top + rect.height - 25}px`; // 8px below the element
-    popup.style.left = `${left - 220}px`;
-    popup.style.display = "block";
-    (async () => {
-        const history = await loadProductHistory(ean, shopId, document.getElementById('startDateTable').value, document.getElementById('endDateTable').value);
-
-        if (!history || !history.data) {
-            console.warn('No product history found.');
-            return;
-        }
-
-
-        //console.log('History for ' + ean + ': ', history.data);
-
-        const historyTable = document.getElementById("popUpHistoryTable");
-
-        // Clear any previous rows
-        historyTable.innerHTML = '';
-
-        const headerRow = document.createElement('tr');
-        headerRow.innerHTML = `
-            <th>Shop</th>
-            <th>Date</th>
-            <th>Stock status</th>
-        `;
-        historyTable.appendChild(headerRow);
-
-        history.data.reverse().forEach(element => {
-            let imgElement = "<img src=''>";
-            if(element.is_available == 1)
-            {
-                imgElement = '<img src="content/img/check.png">'
-            }
-            else if (element.is_available == 0) {
-                imgElement = '<img src="content/img/cross.png">'
-            }
-            else {
-                imgElement = '<img src="content/img/empty_cross.png">'
-            }
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${element.shop_name}</td>
-                <td>${element.date_checked}</td>
-                <td class="history-status-img">${imgElement}</td>
-            `;
-            historyTable.appendChild(row);
-        });
-    })();
-}
-
-//hide pop-up if clicking outside
-document.addEventListener('click', function (event) {
-    const popup = document.getElementById('productHistoryModal');
-
-    if (popup.style.display === 'none') return;
-
-    if (popup.contains(event.target)) return;
-
-    if (event.target.classList.contains('history-icon')) return;
-
-    popup.style.display = 'none';
-});
-
-
-
