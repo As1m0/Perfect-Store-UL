@@ -34,11 +34,13 @@
                 <label for="name">Product Name</label>
                 <input class="w-100" type="text" id="newName" name="newName" required>
             </div>
-            
+
 
             <div class="my-3 mx-auto text-center">
-                <input type="submit" value="Add Product" name="addProduct" class="btn btn-success mt-3 d-none" id="addProductButton">
-                <input type="submit" value="Edit Product" name="editProduct" class="btn btn-primary mt-3 d-none" id="editProductButton"">
+                <input type="submit" value="Add Product" name="addProduct" class="btn btn-success mt-3 d-none"
+                    id="addProductButton">
+                <input type="submit" value="Edit Product" name="editProduct" class="btn btn-primary mt-3 d-none"
+                    id="editProductButton"">
                 <button type="button" class="btn btn-secondary mt-3" onclick="closeNewProductForm()">Cancel</button>
             </div>
 
@@ -80,14 +82,16 @@
             </div>
 
             <div class="filter-group fix-height">
+                <label>Search by EAN</label>
+                <input type="text" id="searchEAN" placeholder="Search by EAN..." style="min-width: 200px;">
+            </div>
+
+            <div class="filter-group fix-height">
                 <label>Search by name</label>
                 <input type="text" id="searchName" placeholder="Search by product name..." style="min-width: 200px;">
             </div>
 
-            <div class="filter-group fix-height">
-                <label>Search by EAN</label>
-                <input type="text" id="searchEAN" placeholder="Search by EAN..." style="min-width: 200px;">
-            </div>
+
 
         </div>
 
@@ -111,7 +115,8 @@
 
 
             <div class="row mx-auto mt-3 w-100">
-                <div class="col-6"><button class="btn btn-success" onclick="openNewProductForm('add')">+ add</button>
+                <div class="col-6"><button class="btn btn-success" onclick="openNewProductForm('add', '')">+
+                        add</button>
                 </div>
                 <div class="col-6">
                     <div style="float: right">

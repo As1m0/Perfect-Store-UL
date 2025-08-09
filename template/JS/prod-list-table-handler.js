@@ -418,117 +418,115 @@ function exportTableToExcel(tableID, filename = '') {
     link.click();
 }
 
-
-// Open new product form
-function openNewProductForm(method, ean = null) {
-    resetNewProductForm();
-    const NewEanInput = document.getElementById('newEan');
-
-    if (method === 'edit') {
-        document.getElementById('editProductButton').classList.remove('d-none');
-        document.getElementById('newProductForm').setAttribute('onsubmit', 'editProduct(event)');
-        checkEanExistsInDB(ean);
-        NewEanInput.value = ean;
-        NewEanInput.readOnly = true;
-    } else if (method === 'add') {
-        document.getElementById('addProductButton').classList.remove('d-none');
-        document.getElementById('newProductForm').setAttribute('onsubmit', 'submitNewProductForm(event)');
-        NewEanInput.addEventListener('input', function () {
-            const ean = NewEanInput.value.trim();
-            if (ean.length >= 8) {
-                checkEanExistsInDB(ean);
-            }
-            else {
-                resetNewProductForm();
-            }
-        });
-    }
-
-    document.getElementById('newProductFormLayer').style.display = 'block';
-    document.getElementById('newProductForm').reset();
-}
-
-// Close new product form
-function closeNewProductForm() {
-    document.getElementById('newProductFormLayer').style.display = 'none';
-    document.getElementById('editProductButton').classList.add('d-none');
-    document.getElementById('addProductButton').classList.add('d-none');
-}
-
+// New Product Form Handling
+const formLayer = document.getElementById('newProductFormLayer');
+const form = document.getElementById('newProductForm');
+const eanInput = document.getElementById('newEan');
+const nameInput = document.getElementById('newName');
+const subcatDropdown = document.getElementById('subcategoryDropdown2');
+const catDropdown = document.getElementById('categoryDropdown2');
+const brandDropdown = document.getElementById('brandDropdown2');
+const addBtn = document.getElementById('addProductButton');
+const editBtn = document.getElementById('editProductButton');
 
 let ProductExists = false;
+let currentMode = 'add'; // or 'edit'
 
-// Check if EAN exists in the database
-async function checkEanExistsInDB(ean) {
+function resetFormState(mode = 'add') {
+    form.reset();
+    subcatDropdown.value = '';
+    catDropdown.value = '';
+    brandDropdown.value = '';
+    eanInput.placeholder = '';
+    eanInput.readOnly = (mode === 'edit');
+    eanInput.required = (mode === 'add');
+
+    addBtn.classList.toggle('d-none', mode !== 'add');
+    editBtn.classList.toggle('d-none', mode !== 'edit');
+    addBtn.classList.remove('disabled');
+    addBtn.value = "add product";
+
+    ProductExists = false;
+}
+
+async function apiCheckEan(ean) {
     try {
-        const response = await fetch(`${API_BASE_URL}/check-ean`, {
+        const res = await fetch(`${API_BASE_URL}/check-ean`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ EAN: parseInt(ean) })
         });
+        const data = await res.json();
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        if (data.success && data.data && data.data.length > 0) {
-            console.log('EAN exists in the database:', data);
+        if (data.success && data.data?.length) {
+            fillFormFromData(data.data[0]);
             ProductExists = true;
-            fillBackDataInFrom(data.data);
-            document.getElementById('addProductButton').classList.add('disabled');
-            document.getElementById('addProductButton').value = "already exists";
+            addBtn.classList.add('disabled');
+            addBtn.value = "already exists";
         } else {
+            clearFormInputs();
             ProductExists = false;
-            document.getElementById('addProductButton').classList.remove('disabled');
-            document.getElementById('addProductButton').value = "add product";
-            resetNewProductForm();
-            console.log('EAN does not exist in the database:', data.message);
         }
-    } catch (error) {
-        console.error('Error checking EAN:', error);
-        //showPopUpFeedback('Error checking EAN. Please try again.', false);
+    } catch (err) {
+        console.error('Error checking EAN:', err);
     }
 }
 
-function resetNewProductForm() {
-    //document.getElementById('newProductForm').reset();
-    document.getElementById('subcategoryDropdown2').value = '';
-    document.getElementById('newName').value = '';
-    document.getElementById('categoryDropdown2').value = '';
-    document.getElementById('brandDropdown2').value = '';
-    document.getElementById('addProductButton').classList.remove('disabled');
-    document.getElementById('addProductButton').value = "add product";
+function clearFormInputs() {
+    subcatDropdown.value = '';
+    catDropdown.value = '';
+    brandDropdown.value = '';
+    nameInput.value = '';
+    addBtn.classList.remove('disabled');
+    addBtn.value = "add product";
 }
 
-// Fill form with existing product data
-function fillBackDataInFrom(product) {
-    document.getElementById('newName').value = product[0].name || '';
-    document.getElementById('subcategoryDropdown2').value = product[0].subcategory_id || '';
-    document.getElementById('categoryDropdown2').value = product[0].category_id || '';
-    document.getElementById('brandDropdown2').value = product[0].brand_id || '';
+function fillFormFromData(p) {
+    nameInput.value = p.name || '';
+    subcatDropdown.value = p.subcategory_id || '';
+    catDropdown.value = p.category_id || '';
+    brandDropdown.value = p.brand_id || '';
 }
 
-function submitNewProductForm(event) {
-    event.preventDefault();
-    const ean = document.getElementById('newEan').value.trim();
-    const name = document.getElementById('newName').value.trim();
-    const categoryId = document.getElementById('categoryDropdown2').value;
-    const subcategoryId = document.getElementById('subcategoryDropdown2').value;
-    const brandId = document.getElementById('brandDropdown2').value;
+function openNewProductForm(mode, ean = '') {
+    currentMode = mode;
+    resetFormState(mode);
+
+    if (mode === 'edit') {
+        eanInput.value = ean;
+        eanInput.placeholder = ean;
+        apiCheckEan(ean);
+    }
+    formLayer.style.display = 'block';
+}
+
+function closeNewProductForm() {
+    formLayer.style.display = 'none';
+}
+
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const ean = (currentMode === 'edit') ? eanInput.placeholder.trim() : eanInput.value.trim();
+    const name = nameInput.value.trim();
+    const categoryId = catDropdown.value;
+    const subcategoryId = subcatDropdown.value;
+    const brandId = brandDropdown.value;
 
     if (!ean || !name || !categoryId || !subcategoryId || !brandId) {
         alert('Please fill in all required fields.');
         return;
     }
-    if (!ProductExists) {
-        fetch(`${API_BASE_URL}/add-product`, {
+
+    if (currentMode === 'add' && ProductExists) {
+        showPopUpFeedback('Product already exists. Please edit instead.', false);
+        return;
+    }
+
+    const endpoint = currentMode === 'add' ? '/add-product' : '/edit-product';
+    try {
+        const res = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 EAN: parseInt(ean),
                 name,
@@ -536,78 +534,32 @@ function submitNewProductForm(event) {
                 subcategory_id: parseInt(subcategoryId),
                 brand_id: parseInt(brandId),
             })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showPopUpFeedback('Product added successfully.');
-
-                    loadData(); // Reload data after adding product
-                    setTimeout(() => {
-                        resetNewProductForm();
-                        document.getElementById('newProductFormLayer').style.display = 'none';
-                        document.getElementById('newProductForm').reset();
-                    }, 500);
-                } else {
-                    throw new Error(data.message || 'Failed to add product');
-                }
-            })
-            .catch(error => {
-                console.error('Error adding product:', error);
-                showPopUpFeedback('Failed to add product. Please try again.', false);
-            })
-    }
-    else {
-        showPopUpFeedback('Product already exists in the database. Please edit it instead.', false);
-    }
-
-    ProductExists = false; // Reset ProductExists for next submission
-
-}
-
-function editProduct(event) {
-    event.preventDefault();
-    const ean = document.getElementById('newEan').value.trim();
-    const name = document.getElementById('newName').value.trim();
-    const categoryId = document.getElementById('categoryDropdown2').value;
-    const subcategoryId = document.getElementById('subcategoryDropdown2').value;
-    const brandId = document.getElementById('brandDropdown2').value;
-
-    if (!ean || !name || !categoryId || !subcategoryId || !brandId) {
-        alert('Please fill in all required fields.');
-        return;
-    }
-
-    fetch(`${API_BASE_URL}/edit-product`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            EAN: parseInt(ean),
-            name,
-            category_id: parseInt(categoryId),
-            subcategory_id: parseInt(subcategoryId),
-            brand_id: parseInt(brandId),
-        })
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showPopUpFeedback('Product edited successfully.');
-
-                loadData(); // Reload data after editing product
-                setTimeout(() => {
-                    resetNewProductForm();
-                    document.getElementById('newProductFormLayer').style.display = 'none';
-                    document.getElementById('newProductForm').reset();
-                }, 500);
-            } else {
-                throw new Error(data.message || 'Failed to edit product');
-            }
-        })
-        .catch(error => {
-            console.error('Error editing product:', error);
-            showPopUpFeedback('Failed to edit product. Please try again.', false);
         });
-}
+        const data = await res.json();
+        if (data.success) {
+            showPopUpFeedback(`Product ${currentMode}ed successfully.`);
+            loadData();
+            setTimeout(() => {
+                closeNewProductForm();
+                resetFormState();
+            }, 500);
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (err) {
+        console.error(`Error ${currentMode}ing product:`, err);
+        showPopUpFeedback(`Failed to ${currentMode} product. Please try again.`, false);
+    }
+});
+
+// Only check EAN when typing in add mode
+eanInput.addEventListener('input', () => {
+    if (currentMode === 'add') {
+        const ean = eanInput.value.trim();
+        if (ean.length >= 8) {
+            apiCheckEan(ean);
+        } else {
+            clearFormInputs();
+        }
+    }
+});

@@ -271,6 +271,30 @@ try {
                 }
                 break;
 
+                case 'edit-product':
+                $input = json_decode(file_get_contents('php://input'), true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    echo ApiResponse::error('Invalid JSON in request body', 400);
+                    break;
+                }
+                $input = sanitizeInput($input);
+                $ean = $input['EAN'] ?? '';
+                $name = $input['name'] ?? '';
+                $brandId = $input['brand_id'] ?? '';
+                $categoryId = $input['category_id'] ?? '';
+                $subcategoryId = $input['subcategory_id'] ?? '';
+                if ($ean && $name && $brandId && $categoryId && $subcategoryId) {
+                    $result = $productService->editProduct($ean, $name, $brandId, $categoryId, $subcategoryId);
+                    if ($result) {
+                        echo ApiResponse::success(null, 'Product edited successfully');
+                    } else {
+                        echo ApiResponse::error('Failed to edit product', 500);
+                    }
+                } else {
+                    echo ApiResponse::error('All parameters are required', 400);
+                }
+                break;
+
             default:
                 echo ApiResponse::error('Endpoint not found', 404);
         }

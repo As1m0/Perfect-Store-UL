@@ -264,7 +264,7 @@ async function loadData() {
         // Add date filters
         const startDateInput = document.getElementById('startDateTable');
         const endDateInput = document.getElementById('endDateTable');
-        
+
         if (startDateInput && startDateInput.value) {
             requestData.filters.start_time = startDateInput.value;
         }
@@ -393,6 +393,19 @@ document.getElementById('searchName').addEventListener('input', function () {
     const searchTerm = this.value.toLowerCase().trim();
     const filteredData = currentData.filter(row => {
         return row.name.toLowerCase().includes(searchTerm);
+    });
+    displayData(filteredData);
+});
+
+//search by ean
+document.getElementById('searchEAN').addEventListener('input', function () {
+    const searchTerm = this.value.trim();
+    if (searchTerm.length < 8) {
+        displayData(currentData); // Reset to full data if search term is too short
+        return;
+    }
+    const filteredData = currentData.filter(row => {
+        return row.ean.toString().includes(searchTerm);
     });
     displayData(filteredData);
 });
@@ -677,7 +690,7 @@ async function loadProductHistory(ean, shopId, startDate = null, endDate = null)
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ ean: parseInt(ean), shop_id: parseInt(shopId), start_date: startDate ? startDate : null, end_date: endDate ? endDate : null  })
+            body: JSON.stringify({ ean: parseInt(ean), shop_id: parseInt(shopId), start_date: startDate ? startDate : null, end_date: endDate ? endDate : null })
         });
 
         if (!response.ok) {
@@ -737,8 +750,7 @@ function showProductHistory(ean, shopId, event) {
 
         history.data.reverse().forEach(element => {
             let imgElement = "<img src=''>";
-            if(element.is_available == 1)
-            {
+            if (element.is_available == 1) {
                 imgElement = '<img src="content/img/check.png">'
             }
             else if (element.is_available == 0) {

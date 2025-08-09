@@ -189,4 +189,22 @@ class ProductService {
         }
     }
 
+
+    public function editProduct( int $ean, string $name, int $brandId, int $categoryId, int $subcategoryId): bool {
+        try {
+            $query = "UPDATE products SET name = :name, brand_id = :brandId, category_id = :categoryId, subcategory_id = :subcategoryId WHERE ean = :ean";
+            $stmt = $this->db->prepare($query);
+            return $stmt->execute([
+                ':ean' => $ean,
+                ':name' => $name,
+                ':brandId' => $brandId,
+                ':categoryId' => $categoryId,
+                ':subcategoryId' => $subcategoryId
+            ]);
+        } catch (Exception $e) {
+            error_log("Error in editProduct: " . $e->getMessage());
+            throw new Exception("Failed to edit product");
+        }
+    }
+
 }
